@@ -28,16 +28,16 @@ func (g *CodeGen) GenMapper() *CodeGen {
 	g.P(`// import "protosaber/enumerate/enumerate.proto";`)
 	g.P()
 
-	for _, st := range g.entities {
-		structName := utils.CamelCase(st.Name)
+	for _, et := range g.entities {
+		structName := utils.CamelCase(et.Name)
 
-		g.P("// ", structName, " ", st.Comment)
+		g.P("// ", structName, " ", trimStructComment(et.Comment, "\n", "\n// "))
 		g.P("message ", structName, " {")
 		g.P("option (things_go.seaql.options) = {")
 		g.P("index: [")
-		for i, index := range st.Indexes {
+		for i, index := range et.Indexes {
 			ending := ""
-			if i+1 != len(st.Indexes) {
+			if i+1 != len(et.Indexes) {
 				ending = ","
 			}
 			g.P("'", index.Definition, "'", ending)
@@ -45,7 +45,7 @@ func (g *CodeGen) GenMapper() *CodeGen {
 		g.P("];")
 		g.P("};")
 		g.P()
-		for i, m := range st.ProtoMessage {
+		for i, m := range et.ProtoMessage {
 			if m.Comment != "" {
 				g.P("// ", m.Comment)
 			}

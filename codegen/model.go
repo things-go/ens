@@ -38,14 +38,14 @@ func (g *CodeGen) GenModel() *CodeGen {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
 
-		g.P("// ", structName, " ", et.Comment)
+		g.P("// ", structName, " ", trimStructComment(et.Comment, "\n", "\n// "))
 		g.P("type ", structName, " struct {")
 		for _, field := range et.Fields {
 			g.P(genModelStructField(field))
 		}
 		g.P("}")
 		g.P()
-		g.P("// TableName implement ens.Tabler interface")
+		g.P("// TableName implement schema.Tabler interface")
 		g.P("func (*", structName, ") TableName() string {")
 		g.P(`return "`, tableName, `"`)
 		g.P("}")

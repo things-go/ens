@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func TrimComment(s string) string {
+func TrimFieldComment(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.ReplaceAll(s, ";", ",")
 	s = strings.ReplaceAll(s, "`", "'")

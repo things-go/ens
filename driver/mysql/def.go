@@ -159,7 +159,7 @@ func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int, disab
 	if c.ColumnComment != "" && !disableCommentTag {
 		b.WriteString(";")
 		b.WriteString("comment:")
-		b.WriteString(utils.TrimComment(c.ColumnComment))
+		b.WriteString(utils.TrimFieldComment(c.ColumnComment))
 	}
 	b.WriteString(`"`)
 	return b.String()

@@ -38,9 +38,9 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 	constFieldWithTableNameFn := func(stName, fieldName string) string {
 		return fmt.Sprintf(`xx_%[1]s_%[2]s_WithTableName`, stName, fieldName)
 	}
-	for _, st := range g.entities {
-		structName := utils.CamelCase(st.Name)
-		tableName := st.Name
+	for _, et := range g.entities {
+		structName := utils.CamelCase(et.Name)
+		tableName := et.Name
 		modelName := packagePrefix + structName
 
 		constTableName := fmt.Sprintf("xx_%s_TableName", structName)
@@ -49,12 +49,12 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 			g.P("// hold model `", structName, "` table name")
 			g.P(constTableName, ` = "`, tableName, `"`)
 			g.P("// hold model `", structName, "` column name")
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
 				g.P(constFieldFn(structName, fieldName), ` = "`, field.Name, `"`)
 			}
 			g.P("// hold model `", structName, "` column name with table name(`", tableName, "`) prefix")
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
 				g.P(
 					constFieldWithTableNameFn(structName, fieldName),
@@ -83,7 +83,7 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 			g.P("xTableName string")
 			g.P()
 			g.P("ALL assist.Asterisk")
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
 				g.P(fieldName, ` assist.`, field.AssistDataType)
 			}
@@ -117,7 +117,7 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 				P().
 				P("ALL:  assist.NewAsterisk(xTableName),").
 				P()
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
 				g.P(fieldName, ": assist.New", field.AssistDataType, "(xTableName, ", constFieldFn(structName, fieldName), "),")
 			}
@@ -185,7 +185,7 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 				P("// X_SelectExpr select model fields").
 				P("func (x *", typeActive, ") X_SelectExpr() []assist.Expr {").
 				P("return []assist.Expr{")
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				g.P("x.", utils.CamelCase(field.Name), ",")
 			}
 			g.
@@ -201,14 +201,14 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 				P("func (x *", typeActive, ") X_Variant_SelectExpr(prefixes ...string) []assist.Expr {").
 				P("if len(prefixes) > 0 {").
 				P("return []assist.Expr{")
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				g.P(genAssist_Variant_SelectExpr(structName, field, true))
 			}
 			g.
 				P("}").
 				P("} else {").
 				P("return []assist.Expr{")
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				g.P(genAssist_Variant_SelectExpr(structName, field, false))
 			}
 			g.
@@ -227,7 +227,7 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 				P("}").
 				P()
 
-			for _, field := range st.Fields {
+			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
 				columnName := field.Name
 				//* method Field_xxx
