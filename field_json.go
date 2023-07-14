@@ -35,12 +35,6 @@ type jsonBuilder struct {
 	inner *FieldDescriptor
 }
 
-// SchemaType sets the column type of the field.
-func (b *jsonBuilder) SchemaType(ct string) *jsonBuilder {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *jsonBuilder) Comment(c string) *jsonBuilder {
 	b.inner.Comment = c

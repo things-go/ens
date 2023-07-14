@@ -27,12 +27,6 @@ type timeBuilder struct {
 	inner *FieldDescriptor
 }
 
-// SchemaType sets the column type of the field.
-func (b *timeBuilder) SchemaType(ct string) *timeBuilder {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *timeBuilder) Comment(c string) *timeBuilder {
 	b.inner.Comment = c

@@ -22,7 +22,6 @@ func {{ $title }}(name string) *{{ $t }}Builder {
     return &{{ $t }}Builder{
         &FieldDescriptor{
 			Name: name,
-			SchemaType: "",
 		    Type: {{ $title }}Type(),
 	    },
     }
@@ -33,16 +32,6 @@ func {{ $title }}(name string) *{{ $t }}Builder {
 // {{ $builder }} is the builder for {{ $t }} fields.
 type {{ $builder }} struct {
 	inner *FieldDescriptor
-}
-
-// SchemaType overrides the default database type with a custom
-// schema type (per dialect) for {{ $t.String }}.
-//
-//	field.{{ title $t.String }}("amount").
-//		SchemaType("decimal(5, 2)")
-func (b *{{ $builder }}) SchemaType(ct string) *{{ $builder }} {
-//	b.inner.SchemaType = ct
-	return b
 }
 
 // Comment sets the comment of the field.

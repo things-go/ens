@@ -170,7 +170,6 @@ func (self *MySQL) GetEntity(tb ens.EntityMetadata) (ens.MixinEntity, error) {
 		nullable := strings.EqualFold(col.IsNullable, nullableTrue)
 		fielder := ens.
 			Field(intoGoType(col.ColumnType), col.ColumnName).
-			SchemaType(col.ColumnType).
 			Comment(col.ColumnComment).
 			Tags(col.IntoOrmTag(columnNameMapKey[col.ColumnName], keyNameCount, self.DisableCommentTag)).
 			Definition(col.IntoSqlDefinition())

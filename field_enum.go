@@ -19,12 +19,6 @@ type enumBuilder struct {
 	inner *FieldDescriptor
 }
 
-// SchemaType sets the column type of the field.
-func (b *enumBuilder) SchemaType(ct string) *enumBuilder {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *enumBuilder) Comment(c string) *enumBuilder {
 	b.inner.Comment = c

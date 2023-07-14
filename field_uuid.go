@@ -20,12 +20,6 @@ type uuidBuilder struct {
 	inner *FieldDescriptor
 }
 
-// SchemaType sets the column type of the field.
-func (b *uuidBuilder) SchemaType(ct string) *uuidBuilder {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *uuidBuilder) Comment(c string) *uuidBuilder {
 	b.inner.Comment = c

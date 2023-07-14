@@ -17,9 +17,8 @@ func Float64Type() *GoType {
 func Float64(name string) *float64Builder {
 	return &float64Builder{
 		&FieldDescriptor{
-			Name:       name,
-			SchemaType: "",
-			Type:       Float64Type(),
+			Name: name,
+			Type: Float64Type(),
 		},
 	}
 }
@@ -27,16 +26,6 @@ func Float64(name string) *float64Builder {
 // float64Builder is the builder for float64 fields.
 type float64Builder struct {
 	inner *FieldDescriptor
-}
-
-// SchemaType overrides the default database type with a custom
-// schema type (per dialect) for float64.
-//
-//	field.Float64("amount").
-//		SchemaType("decimal(5, 2)")
-func (b *float64Builder) SchemaType(ct string) *float64Builder {
-	//	b.inner.SchemaType = ct
-	return b
 }
 
 // Comment sets the comment of the field.

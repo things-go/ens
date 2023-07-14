@@ -34,12 +34,6 @@ type {{ $builder }} struct {
 	inner *FieldDescriptor
 }
 
-// SchemaType sets the column type of the field.
-func (b *{{ $builder }}) SchemaType(ct string) *{{ $builder }} {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *{{ $builder }}) Comment(c string) *{{ $builder }} {
 	b.inner.Comment = c

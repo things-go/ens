@@ -27,12 +27,6 @@ type bytesBuilder struct {
 	inner *FieldDescriptor
 }
 
-// ColumnKey sets the column type of the field.
-func (b *bytesBuilder) SchemaType(ct string) *bytesBuilder {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *bytesBuilder) Comment(c string) *bytesBuilder {
 	b.inner.Comment = c

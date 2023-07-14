@@ -17,9 +17,8 @@ func Float32Type() *GoType {
 func Float32(name string) *float32Builder {
 	return &float32Builder{
 		&FieldDescriptor{
-			Name:       name,
-			SchemaType: "",
-			Type:       Float32Type(),
+			Name: name,
+			Type: Float32Type(),
 		},
 	}
 }
@@ -27,16 +26,6 @@ func Float32(name string) *float32Builder {
 // float32Builder is the builder for float32 fields.
 type float32Builder struct {
 	inner *FieldDescriptor
-}
-
-// SchemaType overrides the default database type with a custom
-// schema type (per dialect) for float32.
-//
-//	field.Float32("amount").
-//		SchemaType("decimal(5, 2)")
-func (b *float32Builder) SchemaType(ct string) *float32Builder {
-	//	b.inner.SchemaType = ct
-	return b
 }
 
 // Comment sets the comment of the field.

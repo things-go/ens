@@ -15,9 +15,8 @@ func BoolType() *GoType {
 func Bool(name string) *boolBuilder {
 	return &boolBuilder{
 		&FieldDescriptor{
-			Name:       name,
-			SchemaType: "TINYINT(1)",
-			Type:       BoolType(),
+			Name: name,
+			Type: BoolType(),
 		},
 	}
 }
@@ -25,12 +24,6 @@ func Bool(name string) *boolBuilder {
 // boolBuilder is the builder for boolean fields.
 type boolBuilder struct {
 	inner *FieldDescriptor
-}
-
-// SchemaType sets the column type of the field.
-func (b *boolBuilder) SchemaType(ct string) *boolBuilder {
-	b.inner.SchemaType = ct
-	return b
 }
 
 // Comment sets the comment of the field.

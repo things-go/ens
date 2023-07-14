@@ -10,7 +10,6 @@ import (
 
 type FieldDescriptor struct {
 	Name       string // field name
-	SchemaType string // database schema type(VARCHAR(256),BIGINT...)
 	Comment    string // comment
 	Nullable   bool   // Nullable reports whether the column may be null.
 	Definition string // field sql definition
@@ -100,12 +99,6 @@ var _ Fielder = (*fieldBuilder)(nil)
 // fieldBuilder is the builder for field.
 type fieldBuilder struct {
 	inner *FieldDescriptor
-}
-
-// SchemaType sets the column type of the field.
-func (b *fieldBuilder) SchemaType(ct string) *fieldBuilder {
-	b.inner.SchemaType = ct
-	return b
 }
 
 // Comment sets the comment of the field.

@@ -28,12 +28,6 @@ type int16Builder struct {
 	inner *FieldDescriptor
 }
 
-// SchemaType sets the column type of the field.
-func (b *int16Builder) SchemaType(ct string) *int16Builder {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *int16Builder) Comment(c string) *int16Builder {
 	b.inner.Comment = c

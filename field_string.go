@@ -20,9 +20,8 @@ func DecimalType() *GoType {
 func String(name string) *stringBuilder {
 	return &stringBuilder{
 		&FieldDescriptor{
-			Name:       name,
-			SchemaType: "varchar(255)",
-			Type:       StringType(),
+			Name: name,
+			Type: StringType(),
 		},
 	}
 }
@@ -32,9 +31,8 @@ func String(name string) *stringBuilder {
 func Decimal(name string) *stringBuilder {
 	return &stringBuilder{
 		&FieldDescriptor{
-			Name:       name,
-			SchemaType: "decimal(16,2)",
-			Type:       DecimalType(),
+			Name: name,
+			Type: DecimalType(),
 		},
 	}
 }
@@ -42,12 +40,6 @@ func Decimal(name string) *stringBuilder {
 // stringBuilder is the builder for string fields.
 type stringBuilder struct {
 	inner *FieldDescriptor
-}
-
-// SchemaType sets the column type of the field.
-func (b *stringBuilder) SchemaType(ct string) *stringBuilder {
-	b.inner.SchemaType = ct
-	return b
 }
 
 // Comment sets the comment of the field.

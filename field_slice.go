@@ -28,12 +28,6 @@ type sliceBuilder[T sliceType] struct {
 	inner *FieldDescriptor
 }
 
-// SchemaType sets the column type of the field.
-func (b *sliceBuilder[T]) SchemaType(ct string) *sliceBuilder[T] {
-	b.inner.SchemaType = ct
-	return b
-}
-
 // Comment sets the comment of the field.
 func (b *sliceBuilder[T]) Comment(c string) *sliceBuilder[T] {
 	b.inner.Comment = c
