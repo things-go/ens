@@ -9,14 +9,15 @@ import (
 )
 
 type CodeGen struct {
-	buf         bytes.Buffer
-	entities    []*ens.Entity
-	byName      string
-	version     string
-	packageName string
-	options     map[string]string
-	skipColumns map[string]struct{}
-	hasColumn   bool
+	buf               bytes.Buffer
+	entities          []*ens.Entity
+	byName            string
+	version           string
+	packageName       string
+	options           map[string]string
+	skipColumns       map[string]struct{}
+	hasColumn         bool
+	disableDocComment bool
 }
 
 type Option func(*CodeGen)
@@ -58,6 +59,12 @@ func WithSkipColumns(mp map[string]struct{}) Option {
 func WithHasColumn(b bool) Option {
 	return func(g *CodeGen) {
 		g.hasColumn = b
+	}
+}
+
+func WithDisableDocComment(b bool) Option {
+	return func(g *CodeGen) {
+		g.disableDocComment = b
 	}
 }
 
