@@ -26,7 +26,7 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 	//* import
 	g.P("import (")
 	if packagePrefix != "" {
-		g.P(`"`, modelPackage, `"`, modelPackage)
+		g.P(`"`, modelPackage, `"`)
 		g.P()
 	}
 	g.P(`assist "github.com/things-go/gorm-assist"`)
