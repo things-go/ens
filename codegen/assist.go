@@ -8,10 +8,10 @@ import (
 	"github.com/things-go/ens/utils"
 )
 
-func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
-	packagePrefix := ""
-	if p := pkgName(modelPackage); p != "" {
-		packagePrefix = p + "."
+func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
+	pkgQualifierPrefix := ""
+	if p := ens.PkgName(modelImportPath); p != "" {
+		pkgQualifierPrefix = p + "."
 	}
 	if !g.disableDocComment {
 		g.
@@ -25,8 +25,8 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 
 	//* import
 	g.P("import (")
-	if packagePrefix != "" {
-		g.P(`"`, modelPackage, `"`)
+	if pkgQualifierPrefix != "" {
+		g.P(`"`, modelImportPath, `"`)
 		g.P()
 	}
 	g.P(`assist "github.com/things-go/gorm-assist"`)
@@ -43,7 +43,7 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 	for _, et := range g.entities {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
-		modelName := packagePrefix + structName
+		modelName := pkgQualifierPrefix + structName
 
 		constTableName := fmt.Sprintf("xx_%s_TableName", structName)
 		{ //* const field
@@ -250,19 +250,6 @@ func (g *CodeGen) GenAssist(modelPackage string) *CodeGen {
 		}
 	}
 	return g
-}
-
-// pkgName returns the package name from a Go
-// identifier with a package qualifier.
-func pkgName(p string) string {
-	if p == "" {
-		return ""
-	}
-	i := strings.LastIndexByte(p, '/')
-	if i == -1 {
-		return p
-	}
-	return p[i+1:]
 }
 
 func genAssist_Variant_SelectExpr(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {

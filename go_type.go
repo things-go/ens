@@ -150,11 +150,11 @@ func (t Type) IntoAssistDataType() string {
 }
 
 type GoType struct {
-	Type     Type   // Type enum.
-	Ident    string // Type identifier,  e.g. int, time.Time, sql.NullInt64.
-	PkgPath  string // import path. e.g. "", time, database/sql.
-	PkgName  string // a package qualifier. e.g. "", time, sql.
-	Nullable bool   // pointers or slices, means not need point.
+	Type         Type   // Type enum.
+	Ident        string // Type identifier,  e.g. int, time.Time, sql.NullInt64.
+	PkgPath      string // import path. e.g. "", time, database/sql.
+	PkgQualifier string // a package qualifier. e.g. "", time, sql.
+	Nullable     bool   // pointers or slices, means not need point.
 }
 
 // String returns the string representation of a type.
@@ -218,10 +218,10 @@ func NewGoType(t Type, v any) *GoType {
 	tt := reflect.TypeOf(v)
 	tv := indirect(tt)
 	return &GoType{
-		Type:     t,
-		Ident:    tt.String(),
-		PkgPath:  tv.PkgPath(),
-		PkgName:  pkgName(tv.String()),
-		Nullable: slices.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
+		Type:         t,
+		Ident:        tt.String(),
+		PkgPath:      tv.PkgPath(),
+		PkgQualifier: PkgQualifier(tv.String()),
+		Nullable:     slices.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
 	}
 }

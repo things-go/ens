@@ -5,9 +5,10 @@ import (
 	"strings"
 )
 
-// pkgName returns the package name from a Go
+// PkgQualifier returns the package name from a Go
 // identifier with a package qualifier.
-func pkgName(ident string) string {
+// eg. time.Time -> time
+func PkgQualifier(ident string) string {
 	i := strings.LastIndexByte(ident, '.')
 	if i == -1 {
 		return ""
@@ -17,6 +18,20 @@ func pkgName(ident string) string {
 		s = s[i+1:]
 	}
 	return s
+}
+
+// PkgName returns the package name from a Go
+// path with a package qualifier.
+// github.com/things/ens -> ens
+func PkgName(p string) string {
+	if p == "" {
+		return ""
+	}
+	i := strings.LastIndexByte(p, '/')
+	if i == -1 {
+		return p
+	}
+	return p[i+1:]
 }
 
 func pkgPath(t reflect.Type) string {
