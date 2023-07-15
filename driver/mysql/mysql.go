@@ -25,10 +25,9 @@ func (self *MySQL) GetSchema() (ens.Schemaer, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	schemas := make([]ens.MixinEntity, 0, len(mds))
-	for _, v := range mds {
-		schema, err := self.GetEntity(v)
+	for _, md := range mds {
+		schema, err := self.GetEntity(md)
 		if err != nil {
 			return nil, err
 		}
