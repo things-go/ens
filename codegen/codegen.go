@@ -3,9 +3,9 @@ package codegen
 import (
 	"bytes"
 	"fmt"
-	"go/format"
 
 	"github.com/things-go/ens"
+	"golang.org/x/tools/imports"
 )
 
 type CodeGen struct {
@@ -89,9 +89,14 @@ func (g *CodeGen) Bytes() []byte {
 	return g.buf.Bytes()
 }
 
-// FormatSource returns the gofmt-ed contents of the CodeBuf's buffer.
+// FormatSource return formats and adjusts imports contents of the CodeGen's buffer.
 func (g *CodeGen) FormatSource() ([]byte, error) {
-	return format.Source(g.buf.Bytes())
+	data := g.buf.Bytes()
+	if len(data) == 0 {
+		return data, nil
+	}
+	// return format.Source(data)
+	return imports.Process("", data, nil)
 }
 
 // Write appends the contents of p to the buffer,
