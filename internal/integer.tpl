@@ -13,10 +13,6 @@ var {{ $t }}Type = reflect.TypeOf({{ $t }}(0))
 
 {{ $title := title $t.String }}
 
-func {{ $title }}Type() *GoType {
-	return NewGoType(Type{{ $title }}, {{ $t }}(0))
-}
-
 // {{ $title }} returns a new Field with type {{ $t }}.
 func {{ $title }}(name string) *{{ $t }}Builder { 
 	return &{{ $t }}Builder{

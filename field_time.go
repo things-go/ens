@@ -8,10 +8,6 @@ import (
 var _ Fielder = (*timeBuilder)(nil)
 var timeType = reflect.TypeOf(time.Time{})
 
-func TimeType() *GoType {
-	return NewGoType(TypeTime, time.Time{})
-}
-
 // Time returns a new Field with type timestamp.
 func Time(name string) *timeBuilder {
 	return &timeBuilder{

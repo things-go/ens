@@ -157,6 +157,11 @@ type GoType struct {
 	Nullable     bool   // pointers or slices, means not need point.
 }
 
+func (t *GoType) Clone() *GoType {
+	tt := *t
+	return &tt
+}
+
 // String returns the string representation of a type.
 func (t GoType) String() string {
 	switch {

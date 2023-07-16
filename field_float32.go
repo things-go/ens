@@ -9,10 +9,6 @@ import (
 var _ Fielder = (*float32Builder)(nil)
 var float32Type = reflect.TypeOf(float32(0))
 
-func Float32Type() *GoType {
-	return NewGoType(TypeFloat32, float32(0))
-}
-
 // Float32 returns a new Field with type float32.
 func Float32(name string) *float32Builder {
 	return &float32Builder{

@@ -1,9 +1,5 @@
 package ens
 
-func EnumType() *GoType {
-	return NewGoType(TypeEnum, "")
-}
-
 // Enum returns a new Field with type enum.
 func Enum(name string) *enumBuilder {
 	return &enumBuilder{

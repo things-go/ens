@@ -9,10 +9,6 @@ import (
 var _ Fielder = (*uint64Builder)(nil)
 var uint64Type = reflect.TypeOf(uint64(0))
 
-func Uint64Type() *GoType {
-	return NewGoType(TypeUint64, uint64(0))
-}
-
 // Uint64 returns a new Field with type uint64.
 func Uint64(name string) *uint64Builder {
 	return &uint64Builder{

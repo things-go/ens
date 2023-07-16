@@ -23,15 +23,15 @@ func PkgQualifier(ident string) string {
 // PkgName returns the package name from a Go
 // path with a package qualifier.
 // github.com/things/ens -> ens
-func PkgName(p string) string {
-	if p == "" {
+func PkgName(path string) string {
+	if path == "" {
 		return ""
 	}
-	i := strings.LastIndexByte(p, '/')
+	i := strings.LastIndexByte(path, '/')
 	if i == -1 {
-		return p
+		return path
 	}
-	return p[i+1:]
+	return path[i+1:]
 }
 
 func pkgPath(t reflect.Type) string {
@@ -47,7 +47,7 @@ func pkgPath(t reflect.Type) string {
 }
 
 func indirect(t reflect.Type) reflect.Type {
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	return t

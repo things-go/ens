@@ -7,14 +7,6 @@ import (
 var _ Fielder = (*stringBuilder)(nil)
 var stringType = reflect.TypeOf("")
 
-func StringType() *GoType {
-	return NewGoType(TypeString, "")
-}
-
-func DecimalType() *GoType {
-	return NewGoType(TypeDecimal, "")
-}
-
 // String returns a new Field with type string.
 // limitation on the size 255.
 func String(name string) *stringBuilder {

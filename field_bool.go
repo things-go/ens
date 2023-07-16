@@ -7,10 +7,6 @@ import (
 var _ Fielder = (*boolBuilder)(nil)
 var boolType = reflect.TypeOf(false)
 
-func BoolType() *GoType {
-	return NewGoType(TypeBool, false)
-}
-
 // Bool returns a new Field with type bool.
 func Bool(name string) *boolBuilder {
 	return &boolBuilder{

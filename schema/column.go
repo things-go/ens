@@ -1,4 +1,4 @@
-package sts
+package schema
 
 import (
 	"strconv"
@@ -6,17 +6,6 @@ import (
 
 	"github.com/things-go/ens/utils"
 )
-
-type Index struct {
-	Table       string
-	KeyName     string
-	PrimaryKey  bool
-	Unique      bool
-	IsComposite bool
-	Priority    int
-	IndexType   string
-	Columns     []string
-}
 
 type Column struct {
 	Name              string

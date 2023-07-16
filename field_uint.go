@@ -9,10 +9,6 @@ import (
 var _ Fielder = (*uintBuilder)(nil)
 var uintType = reflect.TypeOf(uint(0))
 
-func UintType() *GoType {
-	return NewGoType(TypeUint, uint(0))
-}
-
 // Uint returns a new Field with type uint.
 func Uint(name string) *uintBuilder {
 	return &uintBuilder{

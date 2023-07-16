@@ -7,10 +7,6 @@ import (
 var _ Fielder = (*bytesBuilder)(nil)
 var bytesType = reflect.TypeOf([]byte(nil))
 
-func BytesType() *GoType {
-	return NewGoType(TypeBytes, []byte(nil))
-}
-
 // Bytes returns a new Field with type bytes/buffer.
 // In MySQL and SQLite, it is the "BLOB" type, and it does not support for Gremlin.
 func Bytes(name string) *bytesBuilder {

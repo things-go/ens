@@ -1,33 +1,15 @@
 package ens
 
-import (
-	"reflect"
-)
+var _ Fielder = (*jsonBuilder)(nil)
 
 // JSON returns a new Field with type json that is serialized to the given object.
-func JSON(name string, typ any) *jsonBuilder {
-	b := &jsonBuilder{
+func JSON(name string) *jsonBuilder {
+	return &jsonBuilder{
 		&FieldDescriptor{
 			Name: name,
-			Type: &GoType{
-				Type: TypeJSON,
-			},
+			Type: JSONRawMessageType(),
 		},
 	}
-	t := reflect.TypeOf(typ)
-	if t == nil {
-		return b
-	}
-	b.inner.Type.Ident = t.String()
-	b.inner.Type.PkgPath = t.PkgPath()
-	// b.inner.goType(typ)
-	// b.inner.checkGoType(t)
-	switch t.Kind() {
-	case reflect.Slice, reflect.Array, reflect.Ptr, reflect.Map:
-		b.inner.Type.Nullable = true
-		b.inner.Type.PkgPath = pkgPath(t)
-	}
-	return b
 }
 
 // jsonBuilder is the builder for json fields.

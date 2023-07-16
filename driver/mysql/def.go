@@ -248,7 +248,7 @@ var typeDictMatchList = []dictMatchKv{
 	{`^(mediumblob)\b([(]\d+[)])?`, ens.BytesType},            // []byte
 	{`^(longblob)\b([(]\d+[)])?`, ens.BytesType},              // []byte
 	{`^(bit)\b[(]\d+[)]`, ens.BytesType},                      // []uint8
-	{`^(json)\b`, ens.BytesType},                              // datatypes.JSON
+	{`^(json)\b`, ens.JSONRawMessageType},                     // datatypes.JSON
 	{`^(enum)\b[(](.)+[)]`, ens.StringType},                   // string
 	{`^(decimal)\b[(]\d+,\d+[)]`, ens.DecimalType},            // string
 	{`^(binary)\b[(]\d+[)]`, ens.BytesType},                   // []byte

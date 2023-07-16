@@ -9,10 +9,6 @@ import (
 var _ Fielder = (*intBuilder)(nil)
 var intType = reflect.TypeOf(int(0))
 
-func IntType() *GoType {
-	return NewGoType(TypeInt, int(0))
-}
-
 // Int returns a new Field with type int.
 func Int(name string) *intBuilder {
 	return &intBuilder{

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/things-go/ens/matcher"
+	"gorm.io/plugin/soft_delete"
 )
 
 type FieldDescriptor struct {
@@ -28,7 +29,7 @@ func (field *FieldDescriptor) build(opt *Option) {
 	field.AssistDataType = field.Type.Type.IntoAssistDataType()
 	if field.Name == "deleted_at" && field.Type.IsInteger() {
 		field.Optional = false
-		field.goType(zeroSoftDelete)
+		field.goType(soft_delete.DeletedAt(0))
 	}
 	if opt == nil {
 		return
@@ -37,31 +38,31 @@ func (field *FieldDescriptor) build(opt *Option) {
 	if opt.EnableInt {
 		switch field.Type.Type {
 		case TypeInt8, TypeInt16, TypeInt32:
-			field.goType(zeroInt)
+			field.goType(int(0))
 			field.AssistDataType = TypeInt.IntoAssistDataType()
 		case TypeUint8, TypeUint16, TypeUint32:
-			field.goType(zeroUint)
+			field.goType(uint(0))
 			field.AssistDataType = TypeUint.IntoAssistDataType()
 		}
 	}
 	if opt.EnableIntegerInt {
 		switch field.Type.Type {
 		case TypeInt32:
-			field.goType(zeroInt)
+			field.goType(int(0))
 			field.AssistDataType = TypeInt.IntoAssistDataType()
 		case TypeUint32:
-			field.goType(zeroUint)
+			field.goType(uint(0))
 			field.AssistDataType = TypeUint.IntoAssistDataType()
 		}
 	}
 	if opt.EnableBoolInt && field.Type.IsBool() {
-		field.goType(zeroInt)
+		field.goType(int(0))
 		field.AssistDataType = TypeInt.IntoAssistDataType()
 	}
 	if field.Nullable && opt.DisableNullToPoint {
-		zeroValue, ok := zeroSqlNullValue[field.Type.Type]
+		gt, ok := sqlNullValueGoType[field.Type.Type]
 		if ok {
-			field.goType(zeroValue)
+			field.Type = gt.Clone()
 			field.Optional = false
 		}
 	}

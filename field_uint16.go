@@ -9,10 +9,6 @@ import (
 var _ Fielder = (*uint16Builder)(nil)
 var uint16Type = reflect.TypeOf(uint16(0))
 
-func Uint16Type() *GoType {
-	return NewGoType(TypeUint16, uint16(0))
-}
-
 // Uint16 returns a new Field with type uint16.
 func Uint16(name string) *uint16Builder {
 	return &uint16Builder{

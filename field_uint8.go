@@ -9,10 +9,6 @@ import (
 var _ Fielder = (*uint8Builder)(nil)
 var uint8Type = reflect.TypeOf(uint8(0))
 
-func Uint8Type() *GoType {
-	return NewGoType(TypeUint8, uint8(0))
-}
-
 // Uint8 returns a new Field with type uint8.
 func Uint8(name string) *uint8Builder {
 	return &uint8Builder{
