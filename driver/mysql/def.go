@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/things-go/ens"
+	"github.com/things-go/ens/schema"
 	"github.com/things-go/ens/utils"
 )
 
@@ -49,14 +50,44 @@ type Column struct {
 	ColumnDefault          *string `gorm:"column:COLUMN_DEFAULT"`   // column default value.null mean not set.
 	IsNullable             string  `gorm:"column:IS_NULLABLE"`      // column null or not, YEW/NO
 	DataType               string  `gorm:"column:DATA_TYPE"`        // column data type(varchar)
-	CharacterMaximumLength int64   `gorm:"column:CHARACTER_MAXIMUM_LENGTH"`
-	CharacterOctetLength   int64   `gorm:"column:CHARACTER_OCTET_LENGTH"`
-	NumericPrecision       int64   `gorm:"column:NUMERIC_PRECISION"`
-	NumericScale           int64   `gorm:"column:NUMERIC_SCALE"`
+	CharacterMaximumLength *int64  `gorm:"column:CHARACTER_MAXIMUM_LENGTH"`
+	CharacterOctetLength   *int64  `gorm:"column:CHARACTER_OCTET_LENGTH"`
+	NumericPrecision       *int64  `gorm:"column:NUMERIC_PRECISION"`
+	NumericScale           *int64  `gorm:"column:NUMERIC_SCALE"`
 	ColumnType             string  `gorm:"column:COLUMN_TYPE"`    // column type(varchar(64))
 	ColumnKey              string  `gorm:"column:COLUMN_KEY"`     // column key, PRI/MUL
 	Extra                  string  `gorm:"column:EXTRA"`          // extra (auto_increment)
 	ColumnComment          string  `gorm:"column:COLUMN_COMMENT"` // column comment
+}
+
+func (c *Column) IntoSchemaColumn(indexes []*schema.ColumnIndex) *schema.Column {
+	col := &schema.Column{
+		Name:              c.ColumnName,
+		DataType:          c.DataType,
+		ColumnType:        c.ColumnType,
+		Unique:            c.ColumnKey == columnKeyUnique,
+		Nullable:          strings.EqualFold(c.IsNullable, nullableTrue),
+		Default:           c.ColumnDefault,
+		IsPrimaryKey:      c.ColumnKey == columnKeyPrimary,
+		AutoIncrement:     c.Extra == extraAutoIncrement,
+		HasLength:         false,
+		Length:            0,
+		HasPrecisionScale: false,
+		Precision:         0,
+		Scale:             0,
+		Comment:           c.ColumnComment,
+		Indexes:           indexes,
+	}
+	if c.CharacterMaximumLength != nil {
+		col.HasLength = true
+		col.Length = *c.CharacterMaximumLength
+	}
+	if c.NumericPrecision != nil && c.NumericScale != nil {
+		col.HasPrecisionScale = true
+		col.Precision = *c.NumericPrecision
+		col.Scale = *c.NumericScale
+	}
+	return col
 }
 
 func (c *Column) IntoSqlDefinition() string {

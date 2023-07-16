@@ -227,10 +227,10 @@ func fromSqlColumnDefinition(ordinalPosition int, col *sqlparser.ColumnDefinitio
 		ColumnDefault:          nil,
 		IsNullable:             "",
 		DataType:               colType.Type,
-		CharacterMaximumLength: 0,
-		CharacterOctetLength:   0,
-		NumericPrecision:       0,
-		NumericScale:           0,
+		CharacterMaximumLength: nil,
+		CharacterOctetLength:   nil,
+		NumericPrecision:       nil,
+		NumericScale:           nil,
 		ColumnType:             "",
 		ColumnKey:              "",
 		Extra:                  "",
@@ -261,6 +261,16 @@ func fromSqlColumnDefinition(ordinalPosition int, col *sqlparser.ColumnDefinitio
 			return 0
 		}
 		return length
+	}
+	if colType.Length != nil {
+		v := toInt(colType.Length)
+		column.CharacterMaximumLength = &v
+	}
+	if colType.Scale != nil {
+		v := toInt(colType.Length)
+		sv := toInt(colType.Scale)
+		column.NumericPrecision = &v
+		column.NumericScale = &sv
 	}
 
 	isUnsigned := bool(colType.Unsigned)

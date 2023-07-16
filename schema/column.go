@@ -7,6 +7,15 @@ import (
 	"github.com/things-go/ens/utils"
 )
 
+type ColumnIndex struct {
+	KeyName     string
+	PrimaryKey  bool
+	Unique      bool
+	IsComposite bool
+	Priority    int
+	IndexType   string
+}
+
 type Column struct {
 	Name              string
 	DataType          string // varchar
@@ -22,7 +31,7 @@ type Column struct {
 	Precision         int64
 	Scale             int64
 	Comment           string
-	Indexes           []*Index
+	Indexes           []*ColumnIndex
 }
 
 // column, type, not null, authIncrement, default, [primaryKey|index], comment
