@@ -59,7 +59,6 @@ func Parse(v any) error {
 		fmt.Println(fv.Name)
 		fmt.Println(fvt.Kind())
 		fmt.Printf("%#v\n", field.Build(nil))
-
 	}
 
 	return nil

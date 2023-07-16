@@ -134,12 +134,8 @@ func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int) strin
 			b.WriteString("uniqueIndex:")
 			b.WriteString(v.KeyName)
 		} else {
-			if v.KeyName == "sort" { // 兼容 gorm 本身 sort 标签
-				b.WriteString("index")
-			} else {
-				b.WriteString("index:")
-				b.WriteString(v.KeyName)
-			}
+			b.WriteString("index:")
+			b.WriteString(v.KeyName)
 			if v.IndexType == "FULLTEXT" {
 				b.WriteString(",class:FULLTEXT")
 			}
