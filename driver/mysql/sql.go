@@ -16,9 +16,8 @@ import (
 var _ driver.Driver = (*SQL)(nil)
 
 type SQL struct {
-	CreateTableSQL    string
-	DisableCommentTag bool
-	entity            ens.MixinEntity
+	CreateTableSQL string
+	entity         ens.MixinEntity
 }
 
 func (self *SQL) hasParse() bool {
@@ -120,7 +119,7 @@ func (self *SQL) Parse() error {
 			fielder := ens.
 				Field(intoGoType(col.ColumnType), col.ColumnName).
 				Comment(col.ColumnComment).
-				Tags(col.IntoOrmTag(columnNameMapKey[col.ColumnName], keyNameCount, self.DisableCommentTag)).
+				Tags(col.IntoOrmTag(columnNameMapKey[col.ColumnName], keyNameCount)).
 				Definition(col.IntoSqlDefinition())
 			if nullable {
 				fielder.Nullable().Optional()

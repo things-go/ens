@@ -14,10 +14,9 @@ import (
 var _ driver.Driver = (*MySQL)(nil)
 
 type MySQL struct {
-	DB                *gorm.DB
-	DbName            string
-	TableNames        []string
-	DisableCommentTag bool
+	DB         *gorm.DB
+	DbName     string
+	TableNames []string
 }
 
 func (self *MySQL) GetSchema() (ens.Schemaer, error) {
@@ -170,7 +169,7 @@ func (self *MySQL) GetEntity(tb ens.EntityMetadata) (ens.MixinEntity, error) {
 		fielder := ens.
 			Field(intoGoType(col.ColumnType), col.ColumnName).
 			Comment(col.ColumnComment).
-			Tags(col.IntoOrmTag(columnNameMapKey[col.ColumnName], keyNameCount, self.DisableCommentTag)).
+			Tags(col.IntoOrmTag(columnNameMapKey[col.ColumnName], keyNameCount)).
 			Definition(col.IntoSqlDefinition())
 		if nullable {
 			fielder.Nullable().Optional()

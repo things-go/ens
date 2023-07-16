@@ -60,7 +60,7 @@ type Column struct {
 }
 
 func (c *Column) IntoSqlDefinition() string {
-	nullable := strings.EqualFold(c.IsNullable, "YES")
+	nullable := strings.EqualFold(c.IsNullable, nullableTrue)
 	isAutoIncrement := c.Extra == extraAutoIncrement
 	b := strings.Builder{}
 	b.Grow(64)
@@ -87,16 +87,17 @@ func (c *Column) IntoSqlDefinition() string {
 	return b.String()
 }
 
-func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int, disableCommentTag bool) string {
+func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int) string {
 	nullable := strings.EqualFold(c.IsNullable, "YES")
 	isAutoIncrement := c.Extra == extraAutoIncrement
+	isPrimaryKey := c.ColumnKey == columnKeyPrimary
 
 	b := strings.Builder{}
 	b.Grow(64)
 	b.WriteString(`gorm:"column:`)
 	b.WriteString(c.ColumnName)
 	// FIXME: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
-	if !(c.ColumnKey == "PRI" && isAutoIncrement) {
+	if !(isPrimaryKey && isAutoIncrement) {
 		b.WriteString(";")
 		b.WriteString("type:")
 		b.WriteString(c.ColumnType)
@@ -105,9 +106,11 @@ func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int, disab
 		b.WriteString(";")
 		b.WriteString("not null")
 	}
-	if isAutoIncrement {
-		b.WriteString(";")
-		b.WriteString("autoIncrement:true")
+	if isPrimaryKey {
+		if isAutoIncrement {
+			b.WriteString(";")
+			b.WriteString("autoIncrement:true")
+		}
 	} else {
 		if c.ColumnDefault != nil {
 			b.WriteString(";")
@@ -124,9 +127,13 @@ func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int, disab
 	}
 
 	for _, v := range indexes {
-		isPrimaryKey := false
 		b.WriteString(";")
-		if v.NonUnique {
+		if strings.EqualFold(v.KeyName, Primary) {
+			b.WriteString("primaryKey")
+		} else if !v.NonUnique {
+			b.WriteString("uniqueIndex:")
+			b.WriteString(v.KeyName)
+		} else {
 			if v.KeyName == "sort" { // 兼容 gorm 本身 sort 标签
 				b.WriteString("index")
 			} else {
@@ -136,27 +143,15 @@ func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int, disab
 			if v.IndexType == "FULLTEXT" {
 				b.WriteString(",class:FULLTEXT")
 			}
-		} else {
-			if strings.EqualFold(v.KeyName, Primary) {
-				b.WriteString("primaryKey")
-				isPrimaryKey = true
-			} else {
-				b.WriteString("uniqueIndex:")
-				b.WriteString(v.KeyName)
-			}
 		}
 		if keyNameCount[v.KeyName] > 1 {
-			if isPrimaryKey {
-				b.WriteString(";")
-			} else {
-				b.WriteString(",")
-			}
+			b.WriteString(",")
 			b.WriteString("priority:")
 			b.WriteString(strconv.FormatInt(int64(v.SeqInIndex), 10))
 		}
 	}
 
-	if c.ColumnComment != "" && !disableCommentTag {
+	if c.ColumnComment != "" {
 		b.WriteString(";")
 		b.WriteString("comment:")
 		b.WriteString(utils.TrimFieldComment(c.ColumnComment))
