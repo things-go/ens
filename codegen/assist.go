@@ -148,17 +148,6 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 				P("}").
 				P()
 		}
-
-		//* method X_Impl
-		{
-			g.
-				P("// X_Impl universal implement dao.").
-				P("func (x *", typeNative, ") X_Impl() *", assistTypeImpl(structName), " {").
-				P("return &", assistTypeImpl(structName), "{inner: x}").
-				P("}").
-				P()
-		}
-
 		// table and column field
 		{
 			//* method TableName
@@ -187,11 +176,62 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 					P()
 			}
 		}
-		{
-			genAssistInnerImpl(g, et, typeNative, structName, pkgQualifierPrefix)
+		{ // other method
+			genAssistOtherImpl(g, et, typeNative, structName, pkgQualifierPrefix)
 		}
 	}
 	return g
+}
+
+func genAssistOtherImpl(g *CodeGen, et *ens.Entity, typeNative, structName, pkgQualifierPrefix string) {
+	modelName := pkgQualifierPrefix + structName
+	//* method New_Executor
+	{
+		g.
+			P("// New_Executor new entity executor which suggest use only once.").
+			P("func (*", typeNative, ") New_Executor(db *gorm.DB) *assist.Executor[", modelName, "]  {").
+			P("return assist.NewExecutor[", modelName, "](db)").
+			P("}").
+			P()
+	}
+	//* method SelectExpr
+	{
+		g.
+			P("// X_SelectExpr select model fields").
+			P("func (x *", typeNative, ") X_SelectExpr() []assist.Expr {").
+			P("return []assist.Expr{")
+		for _, field := range et.Fields {
+			g.P("x.", utils.CamelCase(field.Name), ",")
+		}
+		g.
+			P("}").
+			P("}").
+			P()
+	}
+
+	//* method X_SelectVariantExpr
+	{
+		g.
+			P("// X_SelectVariantExpr select model fields, but time.Time field convert to timestamp(int64).").
+			P("func (x *", typeNative, ") X_SelectVariantExpr(prefixes ...string) []assist.Expr {").
+			P("if len(prefixes) > 0 {").
+			P("return []assist.Expr{")
+		for _, field := range et.Fields {
+			g.P(genAssist_SelectVariantExpr(structName, field, true))
+		}
+		g.
+			P("}").
+			P("} else {").
+			P("return []assist.Expr{")
+		for _, field := range et.Fields {
+			g.P(genAssist_SelectVariantExpr(structName, field, false))
+		}
+		g.
+			P("}").
+			P("}").
+			P("}").
+			P()
+	}
 }
 
 func genAssist_SelectVariantExpr(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
@@ -219,78 +259,4 @@ func genAssist_SelectVariantExpr(structName string, field *ens.FieldDescriptor, 
 	}
 	b.WriteString(",")
 	return b.String()
-}
-
-func assistTypeImpl(structName string) string {
-	return fmt.Sprintf("%sImpl", utils.LowTitle(structName))
-}
-
-func genAssistInnerImpl(g *CodeGen, et *ens.Entity, typeNative, structName, pkgQualifierPrefix string) {
-	modelName := pkgQualifierPrefix + structName
-	typeImpl := assistTypeImpl(structName)
-	//* type inner
-	{
-		g.P("type ", typeImpl, " struct {")
-		g.P("inner *", typeNative)
-		g.P("}")
-		g.P()
-	}
-	//* method Model
-	{
-		g.
-			P("// Model model").
-			P("func (*", typeImpl, ") Model() *", modelName, " {").
-			P("return &", modelName, "{}").
-			P("}").
-			P()
-	}
-	//* method NewExecutor
-	{
-		g.
-			P("// NewExecutor new entity executor which suggest use only once.").
-			P("func (*", typeImpl, ") NewExecutor(db *gorm.DB) *assist.Executor[", modelName, "]  {").
-			P("return assist.NewExecutor[", modelName, "](db)").
-			P("}").
-			P()
-	}
-	//* method SelectExpr
-	{
-		g.
-			P("// SelectExpr select model fields").
-			P("func (i *", typeImpl, ") SelectExpr() []assist.Expr {").
-			P("x := i.inner").
-			P("return []assist.Expr{")
-		for _, field := range et.Fields {
-			g.P("x.", utils.CamelCase(field.Name), ",")
-		}
-		g.
-			P("}").
-			P("}").
-			P()
-	}
-
-	//* method SelectVariantExpr
-	{
-		g.
-			P("// SelectVariantExpr select model fields, but time.Time field convert to timestamp(int64).").
-			P("func (i *", typeImpl, ") SelectVariantExpr(prefixes ...string) []assist.Expr {").
-			P("x := i.inner").
-			P("if len(prefixes) > 0 {").
-			P("return []assist.Expr{")
-		for _, field := range et.Fields {
-			g.P(genAssist_SelectVariantExpr(structName, field, true))
-		}
-		g.
-			P("}").
-			P("} else {").
-			P("return []assist.Expr{")
-		for _, field := range et.Fields {
-			g.P(genAssist_SelectVariantExpr(structName, field, false))
-		}
-		g.
-			P("}").
-			P("}").
-			P("}").
-			P()
-	}
 }
