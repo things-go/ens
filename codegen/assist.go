@@ -43,7 +43,6 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 	for _, et := range g.entities {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
-		modelName := pkgQualifierPrefix + structName
 
 		constTableName := fmt.Sprintf("xx_%s_TableName", structName)
 		{ //* const field
@@ -70,20 +69,18 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 
 		varNativeModel := fmt.Sprintf(`xxx_%s_Native_Model`, structName)
 		varModel := fmt.Sprintf(`xxx_%s_Model`, structName)
-		fnInnerNew := fmt.Sprintf(`new_X_%s`, structName)
+		fnInnerNew := fmt.Sprintf(`new_%s`, structName)
 		{ //* var field
 			g.
 				P("var ", varNativeModel, " = ", fnInnerNew, `("")`).
 				P("var ", varModel, " = ", fnInnerNew, "(", constTableName, ")").
 				P()
 		}
-		typeActive := fmt.Sprintf("%s_Active", structName)
+		typeNative := fmt.Sprintf("%s_Native", structName)
 		//* type
 		{
-			g.P("type ", typeActive, " struct {")
-			g.P("// private fields")
-			g.P("xTableName string")
-			g.P()
+			g.P("type ", typeNative, " struct {")
+			g.P("xAlias string")
 			g.P("ALL assist.Asterisk")
 			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
@@ -92,54 +89,43 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 			g.P("}")
 			g.P()
 		}
-		//* function X_Native_xxx
-		{
-			g.
-				P("// X_Native_", structName, " native model without TableName.").
-				P("func X_Native_", structName, "() ", typeActive, " {").
-				P("return ", varNativeModel).
-				P("}").
-				P()
-		}
 		//* function X_xxx
 		{
 			g.
 				P("// X_", structName, " model with TableName `", tableName, "`.").
-				P("func X_", structName, "() ", typeActive, " {").
+				P("func X_", structName, "() ", typeNative, " {").
 				P("return ", varModel).
 				P("}").
 				P()
 		}
-		//* function new_X_xxx
+		//* function new_xxx
 		{
 			g.
-				P("func ", fnInnerNew, "(xTableName string) ", typeActive, " {").
-				P("return ", typeActive, " {").
-				P("xTableName: xTableName,").
-				P().
-				P("ALL:  assist.NewAsterisk(xTableName),").
-				P()
+				P("func ", fnInnerNew, "(xAlias string) ", typeNative, " {").
+				P("return ", typeNative, " {").
+				P("xAlias: xAlias,").
+				P("ALL:  assist.NewAsterisk(xAlias),")
 			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
-				g.P(fieldName, ": assist.New", field.AssistDataType, "(xTableName, ", constFieldFn(structName, fieldName), "),")
+				g.P(fieldName, ": assist.New", field.AssistDataType, "(xAlias, ", constFieldFn(structName, fieldName), "),")
 			}
 			g.
 				P("}").
 				P("}").
 				P()
 		}
-		//* function New_X_xxxx
+		//* function New_xxxx
 		{
 			g.
-				P("// New_X_", structName, " new instance.").
-				P("func New_X_", structName, "(xTableName string) ", typeActive, " {").
-				P("switch xTableName {").
+				P("// New_", structName, " new instance.").
+				P("func New_", structName, "(xAlias string) ", typeNative, " {").
+				P("switch xAlias {").
 				P(`case "":`).
 				P("return ", varNativeModel).
 				P("case ", constTableName, ":").
 				P("return ", varModel).
 				P("default:").
-				P("return ", fnInnerNew, "(xTableName)").
+				P("return ", fnInnerNew, "(xAlias)").
 				P("}").
 				P("}").
 				P()
@@ -148,74 +134,27 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		{
 			g.
 				P("// As alias").
-				P("func (*", typeActive, ") As(alias string) ", typeActive, " {").
-				P("return New_X_", structName, "(alias)").
+				P("func (*", typeNative, ") As(alias string) ", typeNative, " {").
+				P("return New_", structName, "(alias)").
 				P("}").
 				P()
 		}
-		//* method X_TableName
+		//* method X_Alias
 		{
 			g.
-				P("// X_TableName hold table name when call New_X_", structName, " or ", structName, "_Active.As that you defined.").
-				P("func (x *", typeActive, ") X_TableName() string {").
-				P("return x.xTableName").
-				P("}").
-				P()
-		}
-
-		//* method X_Model
-		{
-			g.
-				P("// X_Model model").
-				P("func (*", typeActive, ") X_Model() *", modelName, " {").
-				P("return &", modelName, "{}").
-				P("}").
-				P()
-		}
-		//* method X_Executor
-		{
-			g.
-				P("// X_Executor new entity executor which suggest use only once.").
-				P("func (*", typeActive, ") X_Executor(db *gorm.DB) *assist.Executor[", modelName, "]  {").
-				P("return assist.NewExecutor[", modelName, "](db)").
-				P("}").
-				P()
-		}
-		//* method X_SelectExpr
-		{
-			g.
-				P("// X_SelectExpr select model fields").
-				P("func (x *", typeActive, ") X_SelectExpr() []assist.Expr {").
-				P("return []assist.Expr{")
-			for _, field := range et.Fields {
-				g.P("x.", utils.CamelCase(field.Name), ",")
-			}
-			g.
-				P("}").
+				P("// X_Alias hold table name when call New_", structName, " or ", structName, "_Impl.As that you defined.").
+				P("func (x *", typeNative, ") X_Alias() string {").
+				P("return x.xAlias").
 				P("}").
 				P()
 		}
 
-		//* method X_Variant_SelectExpr
+		//* method X_Impl
 		{
 			g.
-				P("// X_Variant_SelectExpr select model fields, but time.Time field convert to timestamp(int64).").
-				P("func (x *", typeActive, ") X_Variant_SelectExpr(prefixes ...string) []assist.Expr {").
-				P("if len(prefixes) > 0 {").
-				P("return []assist.Expr{")
-			for _, field := range et.Fields {
-				g.P(genAssist_Variant_SelectExpr(structName, field, true))
-			}
-			g.
-				P("}").
-				P("} else {").
-				P("return []assist.Expr{")
-			for _, field := range et.Fields {
-				g.P(genAssist_Variant_SelectExpr(structName, field, false))
-			}
-			g.
-				P("}").
-				P("}").
+				P("// X_Impl universal implement dao.").
+				P("func (x *", typeNative, ") X_Impl() *", assistTypeImpl(structName), " {").
+				P("return &", assistTypeImpl(structName), "{inner: x}").
 				P("}").
 				P()
 		}
@@ -224,7 +163,7 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		{
 			//* method TableName
 			g.P("// TableName hold model `", structName, "` table name returns `", tableName, "`.").
-				P("func (*", typeActive, ") TableName() string {").
+				P("func (*", typeNative, ") TableName() string {").
 				P("return ", constTableName).
 				P("}").
 				P()
@@ -236,7 +175,7 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 				g.
 					P("// Field_", fieldName, " hold model `", structName, "` column name.").
 					P("// if prefixes not exist returns `", columnName, "`, others `{prefixes[0]}_", columnName, "`").
-					P("func (*", typeActive, ") Field_", fieldName, "(prefixes ...string) string {").
+					P("func (*", typeNative, ") Field_", fieldName, "(prefixes ...string) string {").
 					P("if len(prefixes) == 0 {").
 					P("return ", constFieldFn(structName, fieldName)).
 					P("}").
@@ -248,11 +187,14 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 					P()
 			}
 		}
+		{
+			genAssistInnerImpl(g, et, typeNative, structName, pkgQualifierPrefix)
+		}
 	}
 	return g
 }
 
-func genAssist_Variant_SelectExpr(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
+func genAssist_SelectVariantExpr(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
 	fieldName := utils.CamelCase(field.Name)
 
 	b := strings.Builder{}
@@ -277,4 +219,78 @@ func genAssist_Variant_SelectExpr(structName string, field *ens.FieldDescriptor,
 	}
 	b.WriteString(",")
 	return b.String()
+}
+
+func assistTypeImpl(structName string) string {
+	return fmt.Sprintf("%sImpl", utils.LowTitle(structName))
+}
+
+func genAssistInnerImpl(g *CodeGen, et *ens.Entity, typeNative, structName, pkgQualifierPrefix string) {
+	modelName := pkgQualifierPrefix + structName
+	typeImpl := assistTypeImpl(structName)
+	//* type inner
+	{
+		g.P("type ", typeImpl, " struct {")
+		g.P("inner *", typeNative)
+		g.P("}")
+		g.P()
+	}
+	//* method Model
+	{
+		g.
+			P("// Model model").
+			P("func (*", typeImpl, ") Model() *", modelName, " {").
+			P("return &", modelName, "{}").
+			P("}").
+			P()
+	}
+	//* method NewExecutor
+	{
+		g.
+			P("// NewExecutor new entity executor which suggest use only once.").
+			P("func (*", typeImpl, ") NewExecutor(db *gorm.DB) *assist.Executor[", modelName, "]  {").
+			P("return assist.NewExecutor[", modelName, "](db)").
+			P("}").
+			P()
+	}
+	//* method SelectExpr
+	{
+		g.
+			P("// SelectExpr select model fields").
+			P("func (i *", typeImpl, ") SelectExpr() []assist.Expr {").
+			P("x := i.inner").
+			P("return []assist.Expr{")
+		for _, field := range et.Fields {
+			g.P("x.", utils.CamelCase(field.Name), ",")
+		}
+		g.
+			P("}").
+			P("}").
+			P()
+	}
+
+	//* method SelectVariantExpr
+	{
+		g.
+			P("// SelectVariantExpr select model fields, but time.Time field convert to timestamp(int64).").
+			P("func (i *", typeImpl, ") SelectVariantExpr(prefixes ...string) []assist.Expr {").
+			P("x := i.inner").
+			P("if len(prefixes) > 0 {").
+			P("return []assist.Expr{")
+		for _, field := range et.Fields {
+			g.P(genAssist_SelectVariantExpr(structName, field, true))
+		}
+		g.
+			P("}").
+			P("} else {").
+			P("return []assist.Expr{")
+		for _, field := range et.Fields {
+			g.P(genAssist_SelectVariantExpr(structName, field, false))
+		}
+		g.
+			P("}").
+			P("}").
+			P("}").
+			P()
+	}
 }
