@@ -194,11 +194,11 @@ func genAssistOtherImpl(g *CodeGen, et *ens.Entity, typeNative, structName, pkgQ
 			P("}").
 			P()
 	}
-	//* method SelectExpr
+	//* method Select_Expr
 	{
 		g.
-			P("// X_SelectExpr select model fields").
-			P("func (x *", typeNative, ") X_SelectExpr() []assist.Expr {").
+			P("// Select_Expr select model fields").
+			P("func (x *", typeNative, ") Select_Expr() []assist.Expr {").
 			P("return []assist.Expr{")
 		for _, field := range et.Fields {
 			g.P("x.", utils.CamelCase(field.Name), ",")
@@ -209,22 +209,22 @@ func genAssistOtherImpl(g *CodeGen, et *ens.Entity, typeNative, structName, pkgQ
 			P()
 	}
 
-	//* method X_SelectVariantExpr
+	//* method Select_VariantExpr
 	{
 		g.
-			P("// X_SelectVariantExpr select model fields, but time.Time field convert to timestamp(int64).").
-			P("func (x *", typeNative, ") X_SelectVariantExpr(prefixes ...string) []assist.Expr {").
+			P("// Select_VariantExpr select model fields, but time.Time field convert to timestamp(int64).").
+			P("func (x *", typeNative, ") Select_VariantExpr(prefixes ...string) []assist.Expr {").
 			P("if len(prefixes) > 0 {").
 			P("return []assist.Expr{")
 		for _, field := range et.Fields {
-			g.P(genAssist_SelectVariantExpr(structName, field, true))
+			g.P(genAssist_SelectVariantExprField(structName, field, true))
 		}
 		g.
 			P("}").
 			P("} else {").
 			P("return []assist.Expr{")
 		for _, field := range et.Fields {
-			g.P(genAssist_SelectVariantExpr(structName, field, false))
+			g.P(genAssist_SelectVariantExprField(structName, field, false))
 		}
 		g.
 			P("}").
@@ -232,9 +232,27 @@ func genAssistOtherImpl(g *CodeGen, et *ens.Entity, typeNative, structName, pkgQ
 			P("}").
 			P()
 	}
+	//* method X_SelectExpr. Deprecated
+	{
+		g.
+			P("// X_SelectExpr select model fields").
+			P("// Deprecated use Select_Expr instead.").
+			P("func (x *", typeNative, ") X_SelectExpr() []assist.Expr {").
+			P("return x.Select_Expr()").
+			P("}")
+	}
+	//* method X_SelectVariantExpr. Deprecated
+	{
+		g.
+			P("// X_SelectVariantExpr select model fields, but time.Time field convert to timestamp(int64).").
+			P("// Deprecated use Select_VariantExpr instead.").
+			P("func (x *", typeNative, ") X_SelectVariantExpr(prefixes ...string) []assist.Expr {").
+			P("return x.Select_VariantExpr(prefixes...)").
+			P("}")
+	}
 }
 
-func genAssist_SelectVariantExpr(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
+func genAssist_SelectVariantExprField(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
 	fieldName := utils.CamelCase(field.Name)
 
 	b := strings.Builder{}
