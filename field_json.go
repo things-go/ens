@@ -29,12 +29,6 @@ func (b *jsonBuilder) Nullable() *jsonBuilder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *jsonBuilder) Definition(s string) *jsonBuilder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.String("dir").

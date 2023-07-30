@@ -36,12 +36,6 @@ func (b *uint16Builder) Nullable() *uint16Builder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *uint16Builder) Definition(s string) *uint16Builder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.Uint16("uint16").

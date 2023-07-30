@@ -183,7 +183,7 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 	return g
 }
 
-func genAssistOtherImpl(g *CodeGen, et *ens.Entity, typeNative, structName, pkgQualifierPrefix string) {
+func genAssistOtherImpl(g *CodeGen, et *ens.EntityDescriptor, typeNative, structName, pkgQualifierPrefix string) {
 	modelName := pkgQualifierPrefix + structName
 	//* method New_Executor
 	{

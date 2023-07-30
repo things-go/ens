@@ -32,20 +32,31 @@ func (g *CodeGen) GenMapper() *CodeGen {
 
 	for _, et := range g.entities {
 		structName := utils.CamelCase(et.Name)
+		commaOrEmpty := func(r int) string {
+			if r == 0 {
+				return ""
+			}
+			return ","
+		}
 
 		g.P("// ", structName, " ", trimStructComment(et.Comment, "\n", "\n// "))
 		g.P("message ", structName, " {")
-		g.P("option (things_go.seaql.options) = {")
-		g.P("index: [")
-		for i, index := range et.Indexes {
-			ending := ""
-			if i+1 != len(et.Indexes) {
-				ending = ","
+		if (et.Table != nil && et.Table.PrimaryKey() != nil) ||
+			len(et.Indexes) > 0 {
+			g.P("option (things_go.seaql.options) = {")
+			g.P("index: [")
+			remain := len(et.Indexes)
+			if et.Table != nil && et.Table.PrimaryKey() != nil {
+				ending := commaOrEmpty(remain)
+				g.P("'", et.Table.PrimaryKey().Definition(), "'", ending)
 			}
-			g.P("'", index.Definition, "'", ending)
+			for _, index := range et.Indexes {
+				ending := commaOrEmpty(remain)
+				g.P("'", index.Index.Definition(), "'", ending)
+			}
+			g.P("];")
+			g.P("};")
 		}
-		g.P("];")
-		g.P("};")
 		g.P()
 		for i, m := range et.ProtoMessage {
 			if m.Comment != "" {

@@ -36,12 +36,6 @@ func (b *float64Builder) Nullable() *float64Builder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *float64Builder) Definition(s string) *float64Builder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.Float64("float64").

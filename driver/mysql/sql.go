@@ -1,258 +1,112 @@
 package mysql
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
+	"ariga.io/atlas/sql/mysql"
+	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
+	"github.com/things-go/ens/internal/sqlx"
 	"github.com/xwb1989/sqlparser"
-	"golang.org/x/exp/maps"
 )
 
 var _ driver.Driver = (*SQL)(nil)
 
 type SQL struct {
 	CreateTableSQL string
-	entity         ens.MixinEntity
 }
 
-func (self *SQL) hasParse() bool {
-	return self.entity != nil
-}
-
-func (self *SQL) Parse() error {
-	if self.hasParse() {
-		return nil
-	}
+// InspectSchema implements driver.Driver.
+func (self *SQL) InspectSchema(context.Context, *schema.InspectOptions) (ens.Schemaer, error) {
 	statement, err := sqlparser.Parse(self.CreateTableSQL)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	switch stmt := statement.(type) {
 	case *sqlparser.DDL:
 		if stmt.Action != sqlparser.CreateStr {
-			return errors.New("不是创建表语句")
+			return nil, errors.New("不是创建表语句")
 		}
 		if stmt.TableSpec == nil {
-			return errors.New("未解析到任何字段")
+			return nil, errors.New("未解析到任何字段")
 		}
-		tbName := stmt.NewName.Name.String()
-		md := ens.EntityMetadata{
-			Name:       tbName,
-			Comment:    "",
-			Definition: self.CreateTableSQL,
+		table, err := parseSqlTable(stmt)
+		if err != nil {
+			return nil, err
 		}
-		// ENGINE=InnoDB default charset=utf8mb4 collate=utf8mb4_general_ci comment='我是注释'
-		tbOptions := strings.Split(stmt.TableSpec.Options, " ")
-		for _, option := range tbOptions {
-			keyValue := strings.Split(option, "=")
-			if len(keyValue) >= 2 {
-				switch keyValue[0] {
-				case "ENGINE":
-				case "charset":
-				case "collate":
-				case "comment":
-					md.Comment = strings.ReplaceAll(keyValue[1], "'", "")
-				}
-			}
-		}
-		//* parser index definition
-		indexes := fromSqlIndexDefinition(tbName, stmt.TableSpec.Indexes)
-
-		keyNameCount := make(map[string]int)          // key name count
-		columnNameMapKey := make(map[string][]*Index) // column name map key
-		keyNameMapFields := make(map[string][]*Index)
-		indexers := make([]ens.Indexer, 0, len(indexes))
-		for _, key := range indexes {
-			keyNameCount[key.KeyName]++
-			keyNameMapFields[key.KeyName] = append(keyNameMapFields[key.KeyName], key)
-			columnNameMapKey[key.ColumnName] = append(columnNameMapKey[key.ColumnName], key)
-		}
-		keyNames := maps.Keys(keyNameCount)
-		sort.Strings(keyNames)
-		for _, keyName := range keyNames {
-			keys, ok := keyNameMapFields[keyName]
-			if !ok || len(keys) == 0 {
-				continue
-			}
-			sort.Sort(IndexSlice(keys))
-			fields := make([]string, 0, len(keys))
-			for _, v := range keys {
-				fields = append(fields, v.ColumnName)
-			}
-			b := strings.Builder{}
-			b.Grow(32)
-			key := keys[0]
-			if key.NonUnique {
-				b.WriteString("KEY ")
-			} else {
-				if strings.EqualFold(keyName, Primary) {
-					b.WriteString("PRIMARY KEY ")
-				} else {
-					b.WriteString("UNIQUE KEY ")
-				}
-			}
-			b.WriteString(fmt.Sprintf("`%s`", keyName))
-			b.WriteString(" (`")
-			b.WriteString(strings.Join(fields, "`, `"))
-			b.WriteString("`) USING ")
-			b.WriteString(key.IndexType)
-
-			indexer := ens.Index(keyName).Fields(fields...).Definition(b.String())
-			indexers = append(indexers, indexer)
-		}
-
-		fielders := make([]ens.Fielder, 0, len(stmt.TableSpec.Columns))
-		for i := 0; i < len(stmt.TableSpec.Columns); i++ {
-			//* parser column definition
-			col, err := fromSqlColumnDefinition(i+1, stmt.TableSpec.Columns[i])
-			if err != nil {
-				return err
-			}
-			col.ColumnKey = findColumnKey(indexes, col.ColumnName)
-
-			nullable := strings.EqualFold(col.IsNullable, nullableTrue)
-			fielder := ens.
-				Field(intoGoType(col.ColumnType), col.ColumnName).
-				Comment(col.ColumnComment).
-				Tags(col.IntoOrmTag(columnNameMapKey[col.ColumnName], keyNameCount)).
-				Definition(col.IntoSqlDefinition())
-			if nullable {
-				fielder.Nullable().Optional()
-			}
-			fielders = append(fielders, fielder)
-		}
-
-		self.entity = new(ens.EntityBuilder).
-			SetMetadata(md).
-			SetFields(fielders...).
-			SetIndexes(indexers...)
+		return &ens.MixinSchema{
+			Name:     "",
+			Entities: []ens.MixinEntity{IntoEntity(table)},
+		}, nil
 	default:
-		return errors.New("不是DDL语句")
+		return nil, errors.New("不是DDL语句")
 	}
-	return nil
 }
 
-func (self *SQL) GetSchema() (ens.Schemaer, error) {
-	err := self.Parse()
-	if err != nil {
-		return nil, err
-	}
-	return &ens.MixinSchema{
-		Name:     "",
-		Entities: []ens.MixinEntity{self.entity},
-	}, nil
-}
+func parseSqlTable(stmt *sqlparser.DDL) (*schema.Table, error) {
+	table := schema.NewTable(stmt.NewName.Name.String())
 
-func (self *SQL) GetEntityMetadata() ([]ens.EntityMetadata, error) {
-	err := self.Parse()
-	if err != nil {
-		return nil, err
-	}
-	return []ens.EntityMetadata{self.entity.Metadata()}, nil
-}
-
-func (self *SQL) GetEntity(tb ens.EntityMetadata) (ens.MixinEntity, error) {
-	err := self.Parse()
-	if err != nil {
-		return nil, err
-	}
-	return self.entity, nil
-}
-
-func (self *SQL) GetEntityDefinition(tbName string) (string, error) {
-	return self.CreateTableSQL, nil
-}
-
-func fromSqlIndexDefinition(tbName string, idxs []*sqlparser.IndexDefinition) []*Index {
-	indexes := make([]*Index, 0, 8)
-	for _, idx := range idxs {
-		keyName := idx.Info.Name.String()
-		nonUnique := true
-		switch idx.Info.Type {
-		case "primary key":
-			nonUnique = false
-		case "unique key", "unique":
-			nonUnique = false
-		case "key":
-			nonUnique = true
-		}
-		indexType := "BTREE"
-		for _, option := range idx.Options {
-			if option.Name == "using" {
-				indexType = option.Using
-			}
-		}
-
-		for i, col := range idx.Columns {
-			indexes = append(indexes, &Index{
-				Table:      tbName,
-				NonUnique:  nonUnique,
-				KeyName:    keyName,
-				SeqInIndex: i + 1,
-				ColumnName: col.Column.String(),
-				IndexType:  indexType,
-			})
-		}
-	}
-	return indexes
-}
-
-func findColumnKey(indexes []*Index, columnName string) string {
-	ck := ""
-	for _, v := range indexes {
-		if v.ColumnName == columnName {
-			if v.KeyName == Primary {
-				return columnKeyPrimary
-			}
-			if !v.NonUnique {
-				return columnKeyUnique
-			} else {
-				ck = columnKeyMultiple
+	//* table
+	// ENGINE=InnoDB default charset=utf8mb4 collate=utf8mb4_general_ci comment='我是注释'
+	tbOptions := strings.Split(stmt.TableSpec.Options, " ")
+	for _, option := range tbOptions {
+		keyValue := strings.Split(option, "=")
+		if len(keyValue) >= 2 {
+			switch keyValue[0] {
+			case "ENGINE":
+				table.AddAttrs(&mysql.Engine{V: keyValue[1], Default: false})
+			case "charset":
+				table.AddAttrs(&schema.Charset{V: keyValue[1]})
+			case "collate":
+				table.AddAttrs(&schema.Collation{V: keyValue[1]})
+			case "comment":
+				table.AddAttrs(&schema.Comment{Text: strings.ReplaceAll(keyValue[1], "'", "")})
 			}
 		}
 	}
-	return ck
+
+	//* columns
+	columns := make([]*schema.Column, 0, len(stmt.TableSpec.Columns))
+	for _, col := range stmt.TableSpec.Columns {
+		column, err := parseSqlColumnDefinition(col)
+		if err != nil {
+			return nil, err
+		}
+		columns = append(columns, column)
+	}
+	table.AddColumns(columns...)
+
+	// * indexes
+	indexes := make([]*schema.Index, 0, len(stmt.TableSpec.Indexes))
+	for _, idx := range stmt.TableSpec.Indexes {
+		index, err := parseSqlIndexDefinition(table, idx, columns)
+		if err != nil {
+			return nil, err
+		}
+		indexes = append(indexes, index)
+	}
+	table.AddIndexes(indexes...)
+	return table, nil
 }
 
-func fromSqlColumnDefinition(ordinalPosition int, col *sqlparser.ColumnDefinition) (*Column, error) {
+func parseSqlColumnDefinition(col *sqlparser.ColumnDefinition) (*schema.Column, error) {
+	coldef := schema.NewColumn(col.Name.String())
 	colType := col.Type
-	column := &Column{
-		ColumnName:             col.Name.String(),
-		OrdinalPosition:        ordinalPosition,
-		ColumnDefault:          nil,
-		IsNullable:             "",
-		DataType:               colType.Type,
-		CharacterMaximumLength: nil,
-		CharacterOctetLength:   nil,
-		NumericPrecision:       nil,
-		NumericScale:           nil,
-		ColumnType:             "",
-		ColumnKey:              "",
-		Extra:                  "",
-		ColumnComment:          "",
-	}
-
 	if colType.Default != nil {
-		defaultValue := string(colType.Default.Val)
-		column.ColumnDefault = &defaultValue
-	}
-	if colType.NotNull {
-		column.IsNullable = nullableFalse
-	} else {
-		column.IsNullable = nullableTrue
+		coldef.Default = &schema.Literal{V: string(colType.Default.Val)}
 	}
 	if colType.Autoincrement {
-		column.Extra = extraAutoIncrement
+		coldef.AddAttrs(&mysql.AutoIncrement{})
 	}
 	if colType.Comment != nil {
-		column.ColumnComment = string(colType.Comment.Val)
+		coldef.AddAttrs(&schema.Comment{Text: string(colType.Comment.Val)})
 	}
-	toInt := func(l *sqlparser.SQLVal) int64 {
+	parseInt := func(l *sqlparser.SQLVal) int64 {
 		if l == nil {
 			return 0
 		}
@@ -262,21 +116,17 @@ func fromSqlColumnDefinition(ordinalPosition int, col *sqlparser.ColumnDefinitio
 		}
 		return length
 	}
-	if colType.Length != nil {
-		v := toInt(colType.Length)
-		column.CharacterMaximumLength = &v
-	}
-	if colType.Scale != nil {
-		v := toInt(colType.Length)
-		sv := toInt(colType.Scale)
-		column.NumericPrecision = &v
-		column.NumericScale = &sv
-	}
 
 	isUnsigned := bool(colType.Unsigned)
 	switch colType.Type {
-	case "tinyint", "smallint", "mediumint",
-		"int", "integer", "bigint":
+	case mysql.TypeBool,
+		mysql.TypeBoolean,
+		mysql.TypeTinyInt,
+		mysql.TypeSmallInt,
+		mysql.TypeMediumInt,
+		mysql.TypeInt,
+		mysql.TypeBigInt,
+		"integer":
 		// `^(tinyint)\b[(]1[)] unsigned`
 		// `^(tinyint)\b[(]1[)]`
 		// `^(tinyint)\b([(]\d+[)])? unsigned`
@@ -287,52 +137,112 @@ func fromSqlColumnDefinition(ordinalPosition int, col *sqlparser.ColumnDefinitio
 		// `^(mediumint)\b([(]\d+[)])?`
 		// `^(int)\b([(]\d+[)])? unsigned`
 		// `^(int)\b([(]\d+[)])?`
-		// `^(integer)\b([(]\d+[)])? unsigned`
-		// `^(integer)\b([(]\d+[)])?`
 		// `^(bigint)\b([(]\d+[)])? unsigned`
 		// `^(bigint)\b([(]\d+[)])?`
-		length := toInt(colType.Length)
-		if length > 0 {
-			if isUnsigned {
-				column.ColumnType = fmt.Sprintf("%s(%d) unsigned", colType.Type, length)
-			} else {
-				column.ColumnType = fmt.Sprintf("%s(%d)", colType.Type, length)
+		// `^(integer)\b([(]\d+[)])? unsigned`
+		// `^(integer)\b([(]\d+[)])?`
+		rawColumnType := func() string {
+			length := int64(0)
+			if colType.Length != nil {
+				length = parseInt(colType.Length)
 			}
-		} else {
+			if length > 0 {
+				if isUnsigned {
+					return fmt.Sprintf("%s(%d) unsigned", colType.Type, length)
+				} else {
+					return fmt.Sprintf("%s(%d)", colType.Type, length)
+				}
+			}
 			if isUnsigned {
-				column.ColumnType = fmt.Sprintf("%s unsigned", colType.Type)
+				return fmt.Sprintf("%s unsigned", colType.Type)
 			} else {
-				column.ColumnType = colType.Type
+				return colType.Type
 			}
 		}
-	case "float", "double", "decimal":
+
+		coldef.Type = &schema.ColumnType{
+			Type: &schema.IntegerType{
+				T:        colType.Type,
+				Unsigned: isUnsigned,
+			},
+			Raw:  rawColumnType(),
+			Null: !bool(colType.NotNull),
+		}
+
+	case mysql.TypeDecimal,
+		mysql.TypeNumeric,
+		mysql.TypeFloat,
+		mysql.TypeDouble,
+		mysql.TypeReal:
 		// `^(float)\b([(]\d+,\d+[)])? unsigned`
 		// `^(float)\b([(]\d+,\d+[)])?`
 		// `^(double)\b([(]\d+,\d+[)])? unsigned`
 		// `^(double)\b([(]\d+,\d+[)])?`
 		// `^(decimal)\b[(]\d+,\d+[)]`
-		length, scale := toInt(colType.Length), toInt(colType.Scale)
+		length, scale := parseInt(colType.Length), parseInt(colType.Scale)
+		raw := colType.Type
 		if length > 0 {
-			column.ColumnType = fmt.Sprintf("%s(%d,%d)", colType.Type, length, scale)
-		} else {
-			column.ColumnType = colType.Type
+			raw = fmt.Sprintf("%s(%d,%d)", colType.Type, length, scale)
 		}
-	case "char", "varchar",
-		"text", "tinytext", "mediumtext", "longtext",
-		"date", "datetime", "timestamp", "time",
-		"blob", "tinyblob", "mediumblob", "longblob",
-		"binary", "varbinary",
-		"bit":
+
+		if colType.Type == mysql.TypeDecimal ||
+			colType.Type == mysql.TypeNumeric {
+			coldef.Type = &schema.ColumnType{
+				Type: &schema.DecimalType{
+					T:         colType.Type,
+					Precision: int(length),
+					Scale:     int(scale),
+					Unsigned:  isUnsigned,
+				},
+				Raw:  raw,
+				Null: !bool(colType.NotNull),
+			}
+		} else {
+			coldef.Type = &schema.ColumnType{
+				Type: &schema.FloatType{
+					T:         colType.Type,
+					Unsigned:  isUnsigned,
+					Precision: int(length),
+				},
+				Raw:  raw,
+				Null: !bool(colType.NotNull),
+			}
+		}
+
+	case mysql.TypeVarchar,
+		mysql.TypeChar,
+		mysql.TypeText,
+		mysql.TypeTinyText,
+		mysql.TypeMediumText,
+		mysql.TypeLongText:
 		// `^(char)\b[(]\d+[)]`
 		// `^(varchar)\b[(]\d+[)]`
 		// `^(text)\b([(]\d+[)])?`
 		// `^(tinytext)\b([(]\d+[)])?`
 		// `^(mediumtext)\b([(]\d+[)])?`
 		// `^(longtext)\b([(]\d+[)])?`
-		// `^(date)\b([(]\d+[)])?`
-		// `^(datetime)\b([(]\d+[)])?`
-		// `^(timestamp)\b([(]\d+[)])?`
-		// `^(time)\b([(]\d+[)])?`
+		raw := colType.Type
+		length := parseInt(colType.Length)
+		if length > 0 {
+			raw = fmt.Sprintf("%s(%d)", colType.Type, length)
+		}
+
+		coldef.Type = &schema.ColumnType{
+			Type: &schema.StringType{
+				T:    colType.Type,
+				Size: int(length),
+			},
+			Raw:  raw,
+			Null: !bool(colType.NotNull),
+		}
+	case
+		mysql.TypeVarBinary,
+		mysql.TypeBinary,
+		mysql.TypeBlob,
+		mysql.TypeTinyBlob,
+		mysql.TypeMediumBlob,
+		mysql.TypeLongBlob,
+		mysql.TypeBit:
 		// `^(blob)\b([(]\d+[)])?`
 		// `^(tinyblob)\b([(]\d+[)])?`
 		// `^(mediumblob)\b([(]\d+[)])?`
@@ -340,23 +250,129 @@ func fromSqlColumnDefinition(ordinalPosition int, col *sqlparser.ColumnDefinitio
 		// `^(binary)\b[(]\d+[)]`
 		// `^(varbinary)\b[(]\d+[)]`
 		// `^(bit)\b[(]\d+[)]`
-		length := toInt(colType.Length)
-		if length > 0 {
-			column.ColumnType = fmt.Sprintf("%s(%d)", colType.Type, length)
-		} else {
-			column.ColumnType = colType.Type
+		var size *int
+
+		raw := colType.Type
+		if colType.Length != nil {
+			length := parseInt(colType.Length)
+			size = sqlx.P(int(length))
+			raw = fmt.Sprintf("%s(%d)", colType.Type, length)
 		}
-	case "enum":
+
+		coldef.Type = &schema.ColumnType{
+			Type: &schema.BinaryType{
+				T:    colType.Type,
+				Size: size,
+			},
+			Raw:  raw,
+			Null: !bool(colType.NotNull),
+		}
+
+	case mysql.TypeTimestamp,
+		mysql.TypeDate,
+		mysql.TypeTime,
+		mysql.TypeDateTime,
+		mysql.TypeYear:
+		// `^(date)\b([(]\d+[)])?`
+		// `^(datetime)\b([(]\d+[)])?`
+		// `^(timestamp)\b([(]\d+[)])?`
+		// `^(time)\b([(]\d+[)])?`
+		// `^(year)\b([(]\d+[)])?`
+		var precision, scale *int
+
+		if colType.Length != nil {
+			precision = sqlx.P(int(parseInt(colType.Length)))
+		}
+		if colType.Scale != nil {
+			scale = sqlx.P(int(parseInt(colType.Scale)))
+		}
+		coldef.Type = &schema.ColumnType{
+			Type: &schema.TimeType{
+				T:         colType.Type,
+				Precision: precision,
+				Scale:     scale,
+			},
+			Raw:  colType.Type,
+			Null: !bool(colType.NotNull),
+		}
+	case mysql.TypeEnum:
 		// `^(enum)\b[(](.)+[)]`
-		column.ColumnType = "enum(" + strings.Join(colType.EnumValues, ",") + ")"
-	case "json":
+		coldef.Type = &schema.ColumnType{
+			Type: &schema.EnumType{
+				T:      colType.Type,
+				Values: colType.EnumValues,
+			},
+			Raw:  "enum(" + strings.Join(colType.EnumValues, ",") + ")",
+			Null: !bool(colType.NotNull),
+		}
+	case mysql.TypeJSON:
 		// `^(json)\b`
-		column.ColumnType = colType.Type
-	case "geometry":
+		coldef.Type = &schema.ColumnType{
+			Type: &schema.JSONType{
+				T: colType.Type,
+			},
+			Raw:  colType.Type,
+			Null: !bool(colType.NotNull),
+		}
+	case mysql.TypeGeometry,
+		mysql.TypePoint,
+		mysql.TypeMultiPoint,
+		mysql.TypeLineString,
+		mysql.TypeMultiLineString,
+		mysql.TypePolygon,
+		mysql.TypeMultiPolygon,
+		mysql.TypeGeoCollection,
+		mysql.TypeGeometryCollection:
 		// `geometry`
-		column.ColumnType = colType.Type
+		coldef.Type = &schema.ColumnType{
+			Type: &schema.SpatialType{
+				T: colType.Type,
+			},
+			Raw:  colType.Type,
+			Null: !bool(colType.NotNull),
+		}
 	default:
 		return nil, fmt.Errorf("unsupported column type(%s)", colType.Type)
 	}
-	return column, nil
+	return coldef, nil
+}
+
+func parseSqlIndexDefinition(table *schema.Table, idx *sqlparser.IndexDefinition, columns []*schema.Column) (*schema.Index, error) {
+	indexName := idx.Info.Name.String()
+	isPk := false
+	unique := false
+	switch idx.Info.Type {
+	case "primary key":
+		isPk = true
+		unique = true
+	case "unique key", "unique":
+		unique = true
+	case "key":
+		unique = false
+	}
+	indexType := "BTREE"
+	for _, option := range idx.Options {
+		if option.Name == "using" {
+			indexType = option.Using
+		}
+	}
+
+	cols := make([]*schema.Column, 0, len(idx.Columns))
+	for _, idxCol := range idx.Columns {
+		columnName := idxCol.Column.String()
+		col, ok := sqlx.FindColumn(columns, columnName)
+		if ok {
+			cols = append(cols, col)
+		} else {
+			return nil, fmt.Errorf("Key('%s') column '%s' doesn't exist in table '%s'.", indexName, columnName, table.Name)
+		}
+	}
+	index := schema.NewIndex(indexName).
+		SetUnique(unique).
+		AddAttrs(&mysql.IndexType{T: indexType}).
+		AddColumns(cols...)
+	if isPk {
+		table.SetPrimaryKey(index)
+	}
+	return index, nil
 }

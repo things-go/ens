@@ -36,12 +36,6 @@ func (b *int64Builder) Nullable() *int64Builder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *int64Builder) Definition(s string) *int64Builder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.Int64("int64").

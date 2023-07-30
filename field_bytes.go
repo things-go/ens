@@ -35,12 +35,6 @@ func (b *bytesBuilder) Nullable() *bytesBuilder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *bytesBuilder) Definition(s string) *bytesBuilder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.Bytes("ip").

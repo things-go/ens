@@ -35,12 +35,6 @@ func (b *timeBuilder) Nullable() *timeBuilder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *timeBuilder) Definition(s string) *timeBuilder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.String("dir").

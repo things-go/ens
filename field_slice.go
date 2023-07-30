@@ -40,12 +40,6 @@ func (b *sliceBuilder[T]) Nullable() *sliceBuilder[T] {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *sliceBuilder[T]) Definition(s string) *sliceBuilder[T] {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 func (b *sliceBuilder[T]) GoType(typ any) *sliceBuilder[T] {
 	return b

@@ -2,8 +2,8 @@ package ens
 
 // Schema
 type Schema struct {
-	Name     string    // schema name
-	Entities []*Entity // schema entity.
+	Name     string              // schema name
+	Entities []*EntityDescriptor // schema entity.
 }
 
 // MixinSchema information
@@ -13,7 +13,7 @@ type MixinSchema struct {
 }
 
 func (self *MixinSchema) Build(opt *Option) *Schema {
-	entities := make([]*Entity, 0, len(self.Entities))
+	entities := make([]*EntityDescriptor, 0, len(self.Entities))
 	for _, mixin := range self.Entities {
 		entities = append(entities, BuildEntity(mixin, opt))
 	}

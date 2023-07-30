@@ -9,9 +9,11 @@ func (g *CodeGen) GenDDL() *CodeGen {
 		g.P()
 	}
 	for _, et := range g.entities {
-		g.P("-- ", et.Name, " ", trimStructComment(et.Comment, "\n", "\n-- "))
-		g.P(et.Definition)
-		g.P()
+		if et.Table != nil {
+			g.P("-- ", et.Name, " ", trimStructComment(et.Comment, "\n", "\n-- "))
+			g.P(et.Table.Definition(), ";")
+			g.P()
+		}
 	}
 	return g
 }

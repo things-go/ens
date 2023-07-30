@@ -5,15 +5,16 @@ package ens
 import (
 	"fmt"
 
+	"github.com/things-go/ens/internal/sqlx"
 	"github.com/things-go/ens/matcher"
 	"gorm.io/plugin/soft_delete"
 )
 
 type FieldDescriptor struct {
-	Name       string // field name
-	Comment    string // comment
-	Nullable   bool   // Nullable reports whether the column may be null.
-	Definition string // field sql definition
+	Name     string // field name
+	Comment  string // comment
+	Nullable bool   // Nullable reports whether the column may be null.
+	Column   ColumnDef
 	// for go
 	Type           *GoType  //  go type information.
 	Optional       bool     // nullable struct field.
@@ -66,6 +67,7 @@ func (field *FieldDescriptor) build(opt *Option) {
 			field.Optional = false
 		}
 	}
+
 	for tag, kind := range opt.Tags {
 		if tag == "json" {
 			if vv := matcher.JsonTag(field.Comment); vv != "" {
@@ -95,6 +97,22 @@ func Field(t *GoType, name string) *fieldBuilder {
 	}
 }
 
+// FieldFromDef returns a new Field with the type and ColumnDef.
+// auto set name, comment, nullable, column and optional.
+func FieldFromDef(t *GoType, def ColumnDef) *fieldBuilder {
+	col := def.Column()
+	return &fieldBuilder{
+		inner: &FieldDescriptor{
+			Name:     col.Name,
+			Comment:  sqlx.MustComment(col.Attrs),
+			Nullable: col.Type.Null,
+			Column:   def,
+			Type:     t,
+			Optional: col.Type.Null,
+		},
+	}
+}
+
 var _ Fielder = (*fieldBuilder)(nil)
 
 // fieldBuilder is the builder for field.
@@ -114,9 +132,9 @@ func (b *fieldBuilder) Nullable() *fieldBuilder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *fieldBuilder) Definition(s string) *fieldBuilder {
-	b.inner.Definition = s
+// Column the column expression of the field.
+func (b *fieldBuilder) Column(e ColumnDef) *fieldBuilder {
+	b.inner.Column = e
 	return b
 }
 

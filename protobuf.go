@@ -23,8 +23,8 @@ func buildProtoMessage(field *FieldDescriptor, enableGogo, enableSea bool) *Prot
 			annotations = append(annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 		}
 	}
-	if enableSea {
-		annotations = append(annotations, fmt.Sprintf(`(things_go.seaql.field) = { type: "%s" }`, field.Definition))
+	if field.Column != nil && enableSea {
+		annotations = append(annotations, fmt.Sprintf(`(things_go.seaql.field) = { type: "%s" }`, field.Column.Definition()))
 	}
 	return &ProtoMessage{
 		DataType:    dataType,

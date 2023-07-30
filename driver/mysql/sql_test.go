@@ -1,8 +1,11 @@
 package mysql
 
 import (
+	"context"
 	"fmt"
 	"testing"
+
+	"github.com/things-go/ens"
 )
 
 func Test_SQL_Parse(t *testing.T) {
@@ -19,15 +22,15 @@ func Test_SQL_Parse(t *testing.T) {
 			// "`updated_at` datetime NOT NULL," +
 			// "`deleted_at` bigint NOT NULL DEFAULT '0'," +
 			"PRIMARY KEY (`id`)," +
-			"KEY `uk_host_trace_serial_no_acct_date` (`host_trace`,`detail_serial_no`,`acct_date`) USING BTREE" +
+			"KEY `uk_value1_value2` (`value1`,`value2`) USING BTREE" +
 			")ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公告-面向所有人的消息';"
 
 	d := &SQL{
 		CreateTableSQL: sql,
 	}
-	err := d.Parse()
+	value, err := d.InspectSchema(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(d.entity)
+	fmt.Println(value.(*ens.MixinSchema).Entities[0].(*ens.EntityBuilder))
 }

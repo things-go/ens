@@ -32,12 +32,6 @@ func (b *uuidBuilder) Nullable() *uuidBuilder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *uuidBuilder) Definition(s string) *uuidBuilder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.String("dir").

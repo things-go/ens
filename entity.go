@@ -1,29 +1,24 @@
 package ens
 
-// EntityMetadata entity metadata.
-type EntityMetadata struct {
-	Name       string // entity name
-	Comment    string // entity comment
-	Definition string // entity SQL definition.
-}
+import "github.com/things-go/ens/internal/sqlx"
 
-// Entity Each table corresponds to an Entity
-type Entity struct {
+// EntityDescriptor Each table corresponds to an EntityDescriptor
+type EntityDescriptor struct {
 	Name         string             // entity name
 	Comment      string             // entity comment
-	Definition   string             // entity SQL definition.
+	Table        TableDef           // entity table define
 	Fields       []*FieldDescriptor // field information
 	Indexes      []*IndexDescriptor // index information
 	ProtoMessage []*ProtoMessage    // protobuf message information.
 }
 
-type EntitySlice []*Entity
+type EntityDescriptorSlice []*EntityDescriptor
 
-func (t EntitySlice) Len() int           { return len(t) }
-func (t EntitySlice) Less(i, j int) bool { return t[i].Name < t[j].Name }
-func (t EntitySlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t EntityDescriptorSlice) Len() int           { return len(t) }
+func (t EntityDescriptorSlice) Less(i, j int) bool { return t[i].Name < t[j].Name }
+func (t EntityDescriptorSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
-func BuildEntity(m MixinEntity, opt *Option) *Entity {
+func BuildEntity(m MixinEntity, opt *Option) *EntityDescriptor {
 	fielders := m.Fields()
 	fields := make([]*FieldDescriptor, 0, len(fielders))
 	protoMessages := make([]*ProtoMessage, 0, len(fielders))
@@ -41,11 +36,12 @@ func BuildEntity(m MixinEntity, opt *Option) *Entity {
 	for _, v := range indexers {
 		indexes = append(indexes, v.Build())
 	}
-	md := m.Metadata()
-	return &Entity{
-		Name:         md.Name,
-		Comment:      md.Comment,
-		Definition:   md.Definition,
+
+	name, comment := m.Metadata()
+	return &EntityDescriptor{
+		Name:         name,
+		Comment:      comment,
+		Table:        m.Table(),
 		Fields:       fields,
 		Indexes:      indexes,
 		ProtoMessage: protoMessages,
@@ -55,13 +51,29 @@ func BuildEntity(m MixinEntity, opt *Option) *Entity {
 var _ MixinEntity = (*EntityBuilder)(nil)
 
 type EntityBuilder struct {
-	md      EntityMetadata // schema metadata
-	fields  []Fielder      // field information
-	indexes []Indexer      // index information
+	name    string    // schema entity name
+	comment string    // schema entity comment
+	table   TableDef  // entity table define
+	fields  []Fielder // field information
+	indexes []Indexer // index information
 }
 
-func (self *EntityBuilder) SetMetadata(md EntityMetadata) *EntityBuilder {
-	self.md = md
+// EntityFromDef returns a new entity with the TableDef.
+// auto set name, comment, table.
+func EntityFromDef(def TableDef) *EntityBuilder {
+	tb := def.Table()
+	return &EntityBuilder{
+		name:    tb.Name,
+		comment: sqlx.MustComment(tb.Attrs),
+		table:   def,
+		fields:  nil,
+		indexes: nil,
+	}
+}
+
+func (self *EntityBuilder) SetMetadata(name, comment string) *EntityBuilder {
+	self.name = name
+	self.comment = comment
 	return self
 }
 func (self *EntityBuilder) SetFields(fields ...Fielder) *EntityBuilder {
@@ -72,15 +84,20 @@ func (self *EntityBuilder) SetIndexes(indexes ...Indexer) *EntityBuilder {
 	self.indexes = indexes
 	return self
 }
+func (self *EntityBuilder) SetTable(tb TableDef) *EntityBuilder {
+	self.table = tb
+	return self
+}
 
 func (self *EntityBuilder) Fields() []Fielder {
 	return self.fields
 }
-
 func (self *EntityBuilder) Indexes() []Indexer {
 	return self.indexes
 }
-
-func (self *EntityBuilder) Metadata() EntityMetadata {
-	return self.md
+func (self *EntityBuilder) Metadata() (name, comment string) {
+	return self.name, self.comment
+}
+func (self *EntityBuilder) Table() TableDef {
+	return self.table
 }

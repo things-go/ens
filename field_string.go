@@ -46,12 +46,6 @@ func (b *stringBuilder) Nullable() *stringBuilder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *stringBuilder) Definition(s string) *stringBuilder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.String("dir").

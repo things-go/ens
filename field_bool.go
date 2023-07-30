@@ -34,12 +34,6 @@ func (b *boolBuilder) Nullable() *boolBuilder {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *boolBuilder) Definition(s string) *boolBuilder {
-	b.inner.Definition = s
-	return b
-}
-
 // GoType overrides the default Go type with a custom one.
 //
 //	field.Bool("deleted").

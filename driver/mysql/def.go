@@ -3,245 +3,21 @@ package mysql
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
+	"ariga.io/atlas/sql/mysql"
+	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
-	"github.com/things-go/ens/schema"
+	"github.com/things-go/ens/internal/sqlx"
 	"github.com/things-go/ens/utils"
 )
 
-const (
-	Primary = "PRIMARY"
-
-	nullableTrue  = "YES"
-	nullableFalse = "NO"
-
-	extraAutoIncrement = "auto_increment"
-
-	columnKeyPrimary  = "PRI"
-	columnKeyUnique   = "UNI"
-	columnKeyMultiple = "MUL"
-)
-
-type ColumnKeyType int
-
-const (
-	ColumnKeyType_NotKey   ColumnKeyType = iota // no key
-	ColumnKeyType_Primary                       // primary key
-	ColumnKeyType_Multiple                      // multiple index key
-	ColumnKeyType_Unique                        // unique
-)
-
-// Table mysql table info
-// sql: SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA={db_name}
-type Table struct {
-	Name      string `gorm:"column:TABLE_NAME"`    // table name, 表名
-	Engine    string `gorm:"column:ENGINE"`        // table engine, 表引擎(InnoDB)
-	RowFormat string `gorm:"column:ROW_FORMAT"`    // table row format, 表数据格式(Dynamic)
-	Comment   string `gorm:"column:TABLE_COMMENT"` // table comment, 表注释
-}
-
-// Column mysql column info
-// sql: SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`={dbName} AND `TABLE_NAME`={tbName}
-type Column struct {
-	ColumnName             string  `gorm:"column:COLUMN_NAME"`      // column name
-	OrdinalPosition        int     `gorm:"column:ORDINAL_POSITION"` // column ordinal position
-	ColumnDefault          *string `gorm:"column:COLUMN_DEFAULT"`   // column default value.null mean not set.
-	IsNullable             string  `gorm:"column:IS_NULLABLE"`      // column null or not, YEW/NO
-	DataType               string  `gorm:"column:DATA_TYPE"`        // column data type(varchar)
-	CharacterMaximumLength *int64  `gorm:"column:CHARACTER_MAXIMUM_LENGTH"`
-	CharacterOctetLength   *int64  `gorm:"column:CHARACTER_OCTET_LENGTH"`
-	NumericPrecision       *int64  `gorm:"column:NUMERIC_PRECISION"`
-	NumericScale           *int64  `gorm:"column:NUMERIC_SCALE"`
-	ColumnType             string  `gorm:"column:COLUMN_TYPE"`    // column type(varchar(64))
-	ColumnKey              string  `gorm:"column:COLUMN_KEY"`     // column key, PRI/MUL
-	Extra                  string  `gorm:"column:EXTRA"`          // extra (auto_increment)
-	ColumnComment          string  `gorm:"column:COLUMN_COMMENT"` // column comment
-}
-
-func (c *Column) IntoSchemaColumn(indexes []*schema.ColumnIndex) *schema.Column {
-	col := &schema.Column{
-		Name:              c.ColumnName,
-		DataType:          c.DataType,
-		ColumnType:        c.ColumnType,
-		Unique:            c.ColumnKey == columnKeyUnique,
-		Nullable:          strings.EqualFold(c.IsNullable, nullableTrue),
-		Default:           c.ColumnDefault,
-		IsPrimaryKey:      c.ColumnKey == columnKeyPrimary,
-		AutoIncrement:     c.Extra == extraAutoIncrement,
-		HasLength:         false,
-		Length:            0,
-		HasPrecisionScale: false,
-		Precision:         0,
-		Scale:             0,
-		Comment:           c.ColumnComment,
-		Indexes:           indexes,
-	}
-	if c.CharacterMaximumLength != nil {
-		col.HasLength = true
-		col.Length = *c.CharacterMaximumLength
-	}
-	if c.NumericPrecision != nil && c.NumericScale != nil {
-		col.HasPrecisionScale = true
-		col.Precision = *c.NumericPrecision
-		col.Scale = *c.NumericScale
-	}
-	return col
-}
-
-func (c *Column) IntoSqlDefinition() string {
-	nullable := strings.EqualFold(c.IsNullable, nullableTrue)
-	isAutoIncrement := c.Extra == extraAutoIncrement
-	b := strings.Builder{}
-	b.Grow(64)
-	b.WriteString(c.ColumnType)
-	if !nullable {
-		b.WriteString(" ")
-		b.WriteString("NOT NULL")
-	}
-	if isAutoIncrement {
-		b.WriteString(" ")
-		b.WriteString("AUTO_INCREMENT")
-	} else {
-		dv := ""
-		if c.ColumnDefault != nil {
-			dv = fmt.Sprintf("DEFAULT '%s'", *c.ColumnDefault)
-		} else if nullable {
-			dv = "DEFAULT NULL"
-		}
-		if dv != "" {
-			b.WriteString(" ")
-			b.WriteString(dv)
-		}
-	}
-	return b.String()
-}
-
-func (c *Column) IntoOrmTag(indexes []*Index, keyNameCount map[string]int) string {
-	nullable := strings.EqualFold(c.IsNullable, "YES")
-	isAutoIncrement := c.Extra == extraAutoIncrement
-	isPrimaryKey := c.ColumnKey == columnKeyPrimary
-
-	b := strings.Builder{}
-	b.Grow(64)
-	b.WriteString(`gorm:"column:`)
-	b.WriteString(c.ColumnName)
-	// FIXME: 主要是整型主键,gorm在自动迁移时没有在mysql上加上auto_increment
-	if !(isPrimaryKey && isAutoIncrement) {
-		b.WriteString(";")
-		b.WriteString("type:")
-		b.WriteString(c.ColumnType)
-	}
-	if !nullable {
-		b.WriteString(";")
-		b.WriteString("not null")
-	}
-	if isPrimaryKey {
-		if isAutoIncrement {
-			b.WriteString(";")
-			b.WriteString("autoIncrement:true")
-		}
-	} else {
-		if c.ColumnDefault != nil {
-			b.WriteString(";")
-			if *c.ColumnDefault == "" {
-				b.WriteString("default:''")
-			} else {
-				b.WriteString("default:")
-				b.WriteString(*c.ColumnDefault)
-			}
-		} else if nullable {
-			b.WriteString(";")
-			b.WriteString("default:null")
-		}
-	}
-
-	for _, v := range indexes {
-		b.WriteString(";")
-		if strings.EqualFold(v.KeyName, Primary) {
-			b.WriteString("primaryKey")
-		} else if !v.NonUnique {
-			b.WriteString("uniqueIndex:")
-			b.WriteString(v.KeyName)
-		} else {
-			b.WriteString("index:")
-			b.WriteString(v.KeyName)
-			if v.IndexType == "FULLTEXT" {
-				b.WriteString(",class:FULLTEXT")
-			}
-		}
-		if keyNameCount[v.KeyName] > 1 {
-			b.WriteString(",")
-			b.WriteString("priority:")
-			b.WriteString(strconv.FormatInt(int64(v.SeqInIndex), 10))
-		}
-	}
-
-	if c.ColumnComment != "" {
-		b.WriteString(";")
-		b.WriteString("comment:")
-		b.WriteString(utils.TrimFieldComment(c.ColumnComment))
-	}
-	b.WriteString(`"`)
-	return b.String()
-}
-
-// key index info
-// sql: SHOW KEYS FROM {table_name}
-type Index struct {
-	Table      string `gorm:"column:Table"`        // 表名
-	NonUnique  bool   `gorm:"column:Non_unique"`   // 不是唯一索引
-	KeyName    string `gorm:"column:Key_name"`     // 索引关键字
-	SeqInIndex int    `gorm:"column:Seq_in_index"` // 索引排序
-	ColumnName string `gorm:"column:Column_name"`  // 索引列名
-	IndexType  string `gorm:"column:Index_type"`   // 索引类型, BTREE
-}
-
-type IndexSlice []*Index
-
-func (t IndexSlice) Len() int           { return len(t) }
-func (t IndexSlice) Less(i, j int) bool { return t[i].SeqInIndex < t[j].SeqInIndex }
-func (t IndexSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-
-// ForeignKey Foreign key of db table info . 表的外键信息
-// sql: SELECT table_schema, table_name, column_name, referenced_table_schema, referenced_table_name, referenced_column_name
-//
-//	FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-//	WHERE table_schema={db_name} AND REFERENCED_TABLE_NAME IS NOT NULL AND TABLE_NAME={table_name}
-type ForeignKey struct {
-	TableSchema           string `gorm:"column:table_schema"`            // Database of column.
-	TableName             string `gorm:"column:table_name"`              // Data table of column.
-	ColumnName            string `gorm:"column:column_name"`             // column names.
-	ReferencedTableSchema string `gorm:"column:referenced_table_schema"` // The database where the index is located.
-	ReferencedTableName   string `gorm:"column:referenced_table_name"`   // Affected tables .
-	ReferencedColumnName  string `gorm:"column:referenced_column_name"`  // Which column of the affected table.
-}
-
-// CreateTable mysql show create table information.
-// sql: SHOW CREATE TABLE {tableName}
-type CreateTable struct {
-	Table string `gorm:"column:Table"`
-	SQL   string `gorm:"column:Create Table"`
-}
-
-func intoGoType(columnType string) *ens.GoType {
-	for _, v := range typeDictMatchList {
-		ok, _ := regexp.MatchString(v.Key, columnType)
-		if ok {
-			return v.NewType()
-		}
-	}
-	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/main/driver/mysql/def.go)", columnType))
-}
-
-type dictMatchKv struct {
+// \b([(]\d+[)])? 匹配0个或1个(\d+)
+var typeDictMatchList = []struct {
 	Key     string
 	NewType func() *ens.GoType
-}
-
-// \b([(]\d+[)])? 匹配0个或1个(\d+)
-var typeDictMatchList = []dictMatchKv{
+}{
+	{`^(bool)`, ens.BoolType},                                 // bool
 	{`^(tinyint)\b[(]1[)] unsigned`, ens.BoolType},            // bool
 	{`^(tinyint)\b[(]1[)]`, ens.BoolType},                     // bool
 	{`^(tinyint)\b([(]\d+[)])? unsigned`, ens.Uint8Type},      // uint8
@@ -266,6 +42,7 @@ var typeDictMatchList = []dictMatchKv{
 	{`^(date)\b([(]\d+[)])?`, ens.TimeType},                   // datatypes.Date
 	{`^(timestamp)\b([(]\d+[)])?`, ens.TimeType},              // time.Time
 	{`^(time)\b([(]\d+[)])?`, ens.TimeType},                   // time.Time
+	{`^(year)\b([(]\d+[)])?`, ens.TimeType},                   // time.Time
 	{`^(text)\b([(]\d+[)])?`, ens.StringType},                 // string
 	{`^(tinytext)\b([(]\d+[)])?`, ens.StringType},             // string
 	{`^(mediumtext)\b([(]\d+[)])?`, ens.StringType},           // string
@@ -280,5 +57,232 @@ var typeDictMatchList = []dictMatchKv{
 	{`^(decimal)\b[(]\d+,\d+[)]`, ens.DecimalType},            // string
 	{`^(binary)\b[(]\d+[)]`, ens.BytesType},                   // []byte
 	{`^(varbinary)\b[(]\d+[)]`, ens.BytesType},                // []byte
-	{`geometry`, ens.StringType},                              // string
+	{`^(geometry)`, ens.StringType},                           // string
+}
+
+func intoGoType(columnType string) *ens.GoType {
+	for _, v := range typeDictMatchList {
+		ok, _ := regexp.MatchString(v.Key, columnType)
+		if ok {
+			return v.NewType()
+		}
+	}
+	panic(fmt.Sprintf("type (%v) not match in any way, need to add on (https://github.com/things-go/ormat/blob/main/driver/mysql/def.go)", columnType))
+}
+
+type TableDef struct {
+	table *schema.Table
+}
+
+func NewTableDef(tb *schema.Table) *TableDef {
+	return &TableDef{table: tb}
+}
+
+func (self *TableDef) Table() *schema.Table { return self.table }
+
+func (self *TableDef) PrimaryKey() ens.IndexDef {
+	if self.table.PrimaryKey != nil {
+		return NewIndexDef(self.table.PrimaryKey)
+	}
+	return nil
+}
+
+func (self *TableDef) Definition() string {
+	tb := self.table
+
+	b := &strings.Builder{}
+	b.Grow(64)
+	fmt.Fprintf(b, "CREATE TABLE `%s` (\n", tb.Name)
+
+	remain := len(tb.Columns) + len(tb.Indexes)
+	if tb.PrimaryKey != nil {
+		remain++
+	}
+	suffixOrEmpty := func(r int) string {
+		if r == 0 {
+			return ""
+		}
+		return ","
+	}
+	//* columns
+	for _, col := range tb.Columns {
+		remain--
+		suffix := suffixOrEmpty(remain)
+		comment, ok := sqlx.Comment(col.Attrs)
+		if ok {
+			comment = fmt.Sprintf(" COMMENT '%s'", comment)
+		}
+		fmt.Fprintf(b, "  `%s` %s%s%s\n", col.Name, NewColumnDef(col).Definition(), comment, suffix)
+	}
+	//* pk + indexes
+	if tb.PrimaryKey != nil {
+		remain--
+		suffix := suffixOrEmpty(remain)
+		fmt.Fprintf(b, "  %s%s\n", NewIndexDef(tb.PrimaryKey).Definition(), suffix)
+	}
+	for _, val := range tb.Indexes {
+		remain--
+		if primaryKey(val.Name) { // ignore primary key, maybe include
+			continue
+		}
+		suffix := suffixOrEmpty(remain)
+		fmt.Fprintf(b, "  %s%s\n", NewIndexDef(val).Definition(), suffix)
+	}
+	//* foreignKeys
+	// TODO: ForeignKeys
+
+	engine := mysql.EngineInnoDB
+	charset := "utf8mb4"
+	collate := ""
+	comment := ""
+	for _, attr := range tb.Attrs {
+		switch val := attr.(type) {
+		case *mysql.Engine:
+			engine = val.V
+		case *schema.Charset:
+			charset = val.V
+		case *schema.Collation:
+			collate = val.V
+		case *schema.Comment:
+			comment = val.Text
+			// case *mysql.AutoIncrement: // ignore this
+		}
+	}
+	fmt.Fprintf(b, ") ENGINE=%s DEFAULT CHARSET=%s", engine, charset)
+	if collate != "" {
+		fmt.Fprintf(b, " COLLATE='%s'", collate)
+	}
+	if comment != "" {
+		fmt.Fprintf(b, " COMMENT='%s'", comment)
+	}
+	return b.String()
+}
+
+type ColumnDef struct {
+	col *schema.Column
+}
+
+func NewColumnDef(col *schema.Column) *ColumnDef {
+	return &ColumnDef{col: col}
+}
+
+func (self *ColumnDef) Column() *schema.Column { return self.col }
+
+func (self *ColumnDef) Definition() string {
+	nullable := self.col.Type.Null
+	autoIncrement := autoIncrement(self.col.Attrs)
+
+	b := &strings.Builder{}
+	b.Grow(64)
+	b.WriteString(self.col.Type.Raw)
+	if !nullable {
+		b.WriteString(" NOT NULL")
+	}
+	if autoIncrement {
+		b.WriteString(" AUTO_INCREMENT")
+	} else {
+		dv, ok := sqlx.DefaultValue(self.col)
+		if ok {
+			fmt.Fprintf(b, " DEFAULT '%s'", strings.Trim(dv, `"`))
+		} else if nullable {
+			b.WriteString(" DEFAULT NULL")
+		}
+	}
+	return b.String()
+}
+
+// column, type, not null, authIncrement, default, [primaryKey|index], comment
+func (self *ColumnDef) GormTag(tb *schema.Table) string {
+	col := self.col
+
+	pkPriority, isPk := 0, false
+	if pk := tb.PrimaryKey; pk != nil {
+		pkPriority, isPk = sqlx.FindIndexPartSeq(pk.Parts, col)
+	}
+	autoIncrement := autoIncrement(col.Attrs)
+
+	b := &strings.Builder{}
+	b.Grow(64)
+	fmt.Fprintf(b, `gorm:"column:%s`, col.Name)
+	if !(isPk && autoIncrement) {
+		fmt.Fprintf(b, ";type:%s", col.Type.Raw)
+	}
+	if !col.Type.Null {
+		fmt.Fprintf(b, ";not null")
+	}
+
+	if isPk {
+		if autoIncrement {
+			fmt.Fprintf(b, ";autoIncrement:true")
+		}
+	} else {
+		dv, ok := sqlx.DefaultValue(col)
+		if ok {
+			if dv == `""` || dv == "" {
+				dv = "''"
+			} else {
+				dv = strings.Trim(dv, `"`) // format: `"xxx"` or `'xxx'`
+			}
+			fmt.Fprintf(b, ";default:%s", dv)
+		} else if col.Type.Null {
+			fmt.Fprintf(b, ";default:null")
+		}
+	}
+
+	//* pk + indexes
+	if isPk && tb.PrimaryKey != nil {
+		fmt.Fprintf(b, ";primaryKey")
+		if len(tb.PrimaryKey.Parts) > 1 {
+			fmt.Fprintf(b, ",priority:%d", pkPriority)
+		}
+	}
+	for _, v := range col.Indexes {
+		if primaryKey(v.Name) { // ignore primary key, may be include
+			continue
+		}
+		if v.Unique {
+			fmt.Fprintf(b, ";uniqueIndex:%s", v.Name)
+		} else {
+			fmt.Fprintf(b, ";index:%s", v.Name)
+			// 	mysql.IndexTypeFullText
+			// if v.IndexType == "FULLTEXT" {
+			// 	b.WriteString(",class:FULLTEXT")
+			// }
+		}
+		if len(v.Parts) > 1 {
+			priority, ok := sqlx.FindIndexPartSeq(v.Parts, col)
+			if ok {
+				fmt.Fprintf(b, ",priority:%d", priority)
+			}
+		}
+	}
+	if comment, ok := sqlx.Comment(col.Attrs); ok && comment != "" {
+		fmt.Fprintf(b, ";comment:%s", utils.TrimFieldComment(comment))
+	}
+	b.WriteString(`"`)
+	return b.String()
+}
+
+type IndexDef struct {
+	index *schema.Index
+}
+
+func NewIndexDef(index *schema.Index) *IndexDef {
+	return &IndexDef{index: index}
+}
+
+func (self *IndexDef) Index() *schema.Index { return self.index }
+
+func (self *IndexDef) Definition() string {
+	index := self.index
+	fields := sqlx.IndexPartColumnNames(index.Parts)
+	indexType := findIndexType(index.Attrs)
+	fieldList := "`" + strings.Join(fields, "`,`") + "`"
+	if primaryKey(index.Name) {
+		return fmt.Sprintf("PRIMARY KEY (%s) USING %s", fieldList, indexType)
+	} else if index.Unique {
+		return fmt.Sprintf("UNIQUE KEY `%s` (%s) USING %s", index.Name, fieldList, indexType)
+	} else {
+		return fmt.Sprintf("KEY `%s` (%s) USING %s", index.Name, fieldList, indexType)
+	}
 }

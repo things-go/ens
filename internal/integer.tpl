@@ -42,12 +42,6 @@ func (b *{{ $builder }}) Nullable() *{{ $builder }} {
 	return b
 }
 
-// Definition set the sql definition of the field.
-func (b *{{ $builder }}) Definition(s string) *{{ $builder }} {
-	b.inner.Definition = s
-	return b
-}
-
 {{ $tt := title $t.String }}
 // GoType overrides the default Go type with a custom one.
 //

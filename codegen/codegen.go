@@ -10,7 +10,7 @@ import (
 
 type CodeGen struct {
 	buf               bytes.Buffer
-	entities          []*ens.Entity
+	entities          []*ens.EntityDescriptor
 	byName            string
 	version           string
 	packageName       string
@@ -68,7 +68,7 @@ func WithDisableDocComment(b bool) Option {
 	}
 }
 
-func New(md []*ens.Entity, opts ...Option) *CodeGen {
+func New(md []*ens.EntityDescriptor, opts ...Option) *CodeGen {
 	g := &CodeGen{
 		entities:    md,
 		byName:      "codegen",
