@@ -1,15 +1,18 @@
 package ens
 
-import "github.com/things-go/ens/internal/sqlx"
+import (
+	"github.com/things-go/ens/internal/sqlx"
+)
 
 // EntityDescriptor Each table corresponds to an EntityDescriptor
 type EntityDescriptor struct {
-	Name         string             // entity name
-	Comment      string             // entity comment
-	Table        TableDef           // entity table define
-	Fields       []*FieldDescriptor // field information
-	Indexes      []*IndexDescriptor // index information
-	ProtoMessage []*ProtoMessage    // protobuf message information.
+	Name         string                  // entity name
+	Comment      string                  // entity comment
+	Table        TableDef                // entity table define
+	Fields       []*FieldDescriptor      // field information
+	Indexes      []*IndexDescriptor      // index information
+	ForeignKeys  []*ForeignKeyDescriptor // foreign key information
+	ProtoMessage []*ProtoMessage         // protobuf message information.
 }
 
 type EntityDescriptorSlice []*EntityDescriptor
@@ -36,7 +39,11 @@ func BuildEntity(m MixinEntity, opt *Option) *EntityDescriptor {
 	for _, v := range indexers {
 		indexes = append(indexes, v.Build())
 	}
-
+	fkers := m.ForeignKeys()
+	fks := make([]*ForeignKeyDescriptor, 0, len(fkers))
+	for _, v := range fkers {
+		fks = append(fks, v.Build())
+	}
 	name, comment := m.Metadata()
 	return &EntityDescriptor{
 		Name:         name,
@@ -44,6 +51,7 @@ func BuildEntity(m MixinEntity, opt *Option) *EntityDescriptor {
 		Table:        m.Table(),
 		Fields:       fields,
 		Indexes:      indexes,
+		ForeignKeys:  fks,
 		ProtoMessage: protoMessages,
 	}
 }
@@ -51,11 +59,12 @@ func BuildEntity(m MixinEntity, opt *Option) *EntityDescriptor {
 var _ MixinEntity = (*EntityBuilder)(nil)
 
 type EntityBuilder struct {
-	name    string    // schema entity name
-	comment string    // schema entity comment
-	table   TableDef  // entity table define
-	fields  []Fielder // field information
-	indexes []Indexer // index information
+	name        string         // schema entity name
+	comment     string         // schema entity comment
+	table       TableDef       // entity table define
+	fields      []Fielder      // field information
+	indexes     []Indexer      // index information
+	foreignKeys []ForeignKeyer // foreign key information
 }
 
 // EntityFromDef returns a new entity with the TableDef.
@@ -76,6 +85,10 @@ func (self *EntityBuilder) SetMetadata(name, comment string) *EntityBuilder {
 	self.comment = comment
 	return self
 }
+func (self *EntityBuilder) SetTable(tb TableDef) *EntityBuilder {
+	self.table = tb
+	return self
+}
 func (self *EntityBuilder) SetFields(fields ...Fielder) *EntityBuilder {
 	self.fields = fields
 	return self
@@ -84,20 +97,12 @@ func (self *EntityBuilder) SetIndexes(indexes ...Indexer) *EntityBuilder {
 	self.indexes = indexes
 	return self
 }
-func (self *EntityBuilder) SetTable(tb TableDef) *EntityBuilder {
-	self.table = tb
+func (self *EntityBuilder) SetForeignKeys(fks ...ForeignKeyer) *EntityBuilder {
+	self.foreignKeys = fks
 	return self
 }
-
-func (self *EntityBuilder) Fields() []Fielder {
-	return self.fields
-}
-func (self *EntityBuilder) Indexes() []Indexer {
-	return self.indexes
-}
-func (self *EntityBuilder) Metadata() (name, comment string) {
-	return self.name, self.comment
-}
-func (self *EntityBuilder) Table() TableDef {
-	return self.table
-}
+func (self *EntityBuilder) Metadata() (name, comment string) { return self.name, self.comment }
+func (self *EntityBuilder) Table() TableDef                  { return self.table }
+func (self *EntityBuilder) Fields() []Fielder                { return self.fields }
+func (self *EntityBuilder) Indexes() []Indexer               { return self.indexes }
+func (self *EntityBuilder) ForeignKeys() []ForeignKeyer      { return self.foreignKeys }

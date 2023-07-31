@@ -1,8 +1,6 @@
 package mysql
 
 import (
-	"strings"
-
 	"ariga.io/atlas/sql/mysql"
 	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
@@ -11,11 +9,6 @@ import (
 
 func autoIncrement(attrs []schema.Attr) bool {
 	return sqlx.Has(attrs, &mysql.AutoIncrement{})
-}
-
-func primaryKey(name string) bool {
-	return strings.EqualFold(name, "PRI") ||
-		strings.EqualFold(name, "PRIMARY")
 }
 
 func findIndexType(attrs []schema.Attr) string {
@@ -43,10 +36,14 @@ func IntoEntity(tb *schema.Table) ens.MixinEntity {
 		indexers = append(indexers, ens.IndexFromDef(NewIndexDef(index)))
 	}
 	//* foreignKeys
-	// TODO: ...
+	fkers := make([]ens.ForeignKeyer, 0, len(tb.ForeignKeys))
+	for _, fk := range tb.ForeignKeys {
+		fkers = append(fkers, ens.ForeignKeyFromDef(NewForeignKey(fk)))
+	}
 
 	// * table
 	return ens.EntityFromDef(NewTableDef(tb)).
 		SetFields(fielders...).
-		SetIndexes(indexers...)
+		SetIndexes(indexers...).
+		SetForeignKeys(fkers...)
 }

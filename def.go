@@ -19,6 +19,11 @@ type IndexDef interface {
 	Definition() string
 }
 
+type ForeignKeyDef interface {
+	ForeignKey() *schema.ForeignKey
+	Definition() string
+}
+
 type Schemaer interface {
 	Build(opt *Option) *Schema
 }
@@ -31,9 +36,14 @@ type Fielder interface {
 	Build(opt *Option) *FieldDescriptor
 }
 
+type ForeignKeyer interface {
+	Build() *ForeignKeyDescriptor
+}
+
 type MixinEntity interface {
-	Fields() []Fielder
-	Indexes() []Indexer
 	Metadata() (string, string)
 	Table() TableDef
+	Fields() []Fielder
+	Indexes() []Indexer
+	ForeignKeys() []ForeignKeyer
 }

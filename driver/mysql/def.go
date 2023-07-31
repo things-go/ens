@@ -94,7 +94,7 @@ func (self *TableDef) Definition() string {
 	b.Grow(64)
 	fmt.Fprintf(b, "CREATE TABLE `%s` (\n", tb.Name)
 
-	remain := len(tb.Columns) + len(tb.Indexes)
+	remain := len(tb.Columns) + len(tb.Indexes) + len(tb.ForeignKeys)
 	if tb.PrimaryKey != nil {
 		remain++
 	}
@@ -122,14 +122,18 @@ func (self *TableDef) Definition() string {
 	}
 	for _, val := range tb.Indexes {
 		remain--
-		if primaryKey(val.Name) { // ignore primary key, maybe include
+		if sqlx.IndexEqual(tb.PrimaryKey, val) { // ignore primary key, maybe include
 			continue
 		}
 		suffix := suffixOrEmpty(remain)
 		fmt.Fprintf(b, "  %s%s\n", NewIndexDef(val).Definition(), suffix)
 	}
 	//* foreignKeys
-	// TODO: ForeignKeys
+	for _, val := range tb.ForeignKeys {
+		remain--
+		suffix := suffixOrEmpty(remain)
+		fmt.Fprintf(b, "  %s%s\n", NewForeignKey(val).Definition(), suffix)
+	}
 
 	engine := mysql.EngineInnoDB
 	charset := "utf8mb4"
@@ -236,21 +240,21 @@ func (self *ColumnDef) GormTag(tb *schema.Table) string {
 			fmt.Fprintf(b, ",priority:%d", pkPriority)
 		}
 	}
-	for _, v := range col.Indexes {
-		if primaryKey(v.Name) { // ignore primary key, may be include
+	for _, val := range col.Indexes {
+		if sqlx.IndexEqual(tb.PrimaryKey, val) { // ignore primary key, may be include
 			continue
 		}
-		if v.Unique {
-			fmt.Fprintf(b, ";uniqueIndex:%s", v.Name)
+		if val.Unique {
+			fmt.Fprintf(b, ";uniqueIndex:%s", val.Name)
 		} else {
-			fmt.Fprintf(b, ";index:%s", v.Name)
+			fmt.Fprintf(b, ";index:%s", val.Name)
 			// 	mysql.IndexTypeFullText
 			// if v.IndexType == "FULLTEXT" {
 			// 	b.WriteString(",class:FULLTEXT")
 			// }
 		}
-		if len(v.Parts) > 1 {
-			priority, ok := sqlx.FindIndexPartSeq(v.Parts, col)
+		if len(val.Parts) > 1 {
+			priority, ok := sqlx.FindIndexPartSeq(val.Parts, col)
 			if ok {
 				fmt.Fprintf(b, ",priority:%d", priority)
 			}
@@ -278,11 +282,31 @@ func (self *IndexDef) Definition() string {
 	fields := sqlx.IndexPartColumnNames(index.Parts)
 	indexType := findIndexType(index.Attrs)
 	fieldList := "`" + strings.Join(fields, "`,`") + "`"
-	if primaryKey(index.Name) {
+	if sqlx.IndexEqual(index.Table.PrimaryKey, index) {
 		return fmt.Sprintf("PRIMARY KEY (%s) USING %s", fieldList, indexType)
 	} else if index.Unique {
 		return fmt.Sprintf("UNIQUE KEY `%s` (%s) USING %s", index.Name, fieldList, indexType)
 	} else {
 		return fmt.Sprintf("KEY `%s` (%s) USING %s", index.Name, fieldList, indexType)
 	}
+}
+
+type ForeignKeyDef struct {
+	fk *schema.ForeignKey
+}
+
+func NewForeignKey(fk *schema.ForeignKey) *ForeignKeyDef {
+	return &ForeignKeyDef{fk: fk}
+}
+
+func (self *ForeignKeyDef) ForeignKey() *schema.ForeignKey { return self.fk }
+
+func (self *ForeignKeyDef) Definition() string {
+	fk := self.fk
+	columnNameList := "`" + strings.Join(sqlx.ColumnNames(fk.Columns), "`,`") + "`"
+	refColumnNameList := "`" + strings.Join(sqlx.ColumnNames(fk.RefColumns), "`,`") + "`"
+	return fmt.Sprintf(
+		"CONSTRAINT `%s` FOREIGN KEY (%s) REFERENCES `%s` (%s) ON DELETE %s ON UPDATE %s",
+		fk.Symbol, columnNameList, fk.RefTable.Name, refColumnNameList, fk.OnDelete, fk.OnUpdate,
+	)
 }

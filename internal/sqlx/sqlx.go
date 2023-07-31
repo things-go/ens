@@ -77,6 +77,10 @@ func DefaultValue(c *schema.Column) (string, bool) {
 	}
 }
 
+func IndexEqual(idx1, idx2 *schema.Index) bool {
+	return idx1 != nil && idx2 != nil && (idx1 == idx2 || idx1.Name == idx2.Name)
+}
+
 func FindIndexPartSeq(parts []*schema.IndexPart, col *schema.Column) (int, bool) {
 	for _, p := range parts {
 		if p.C == col || p.C.Name == col.Name {
@@ -84,6 +88,14 @@ func FindIndexPartSeq(parts []*schema.IndexPart, col *schema.Column) (int, bool)
 		}
 	}
 	return 0, false
+}
+
+func IndexPartColumnNames(parts []*schema.IndexPart) []string {
+	fields := make([]string, 0, len(parts))
+	for _, v := range parts {
+		fields = append(fields, v.C.Name)
+	}
+	return fields
 }
 
 func FindColumn(columns []*schema.Column, columnName string) (*schema.Column, bool) {
@@ -95,12 +107,12 @@ func FindColumn(columns []*schema.Column, columnName string) (*schema.Column, bo
 	return nil, false
 }
 
-func IndexPartColumnNames(parts []*schema.IndexPart) []string {
-	fields := make([]string, 0, len(parts))
-	for _, v := range parts {
-		fields = append(fields, v.C.Name)
+func ColumnNames(columns []*schema.Column) []string {
+	ns := make([]string, 0, len(columns))
+	for _, col := range columns {
+		ns = append(ns, col.Name)
 	}
-	return fields
+	return ns
 }
 
 // P returns a pointer to v.
