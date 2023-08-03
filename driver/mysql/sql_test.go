@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/things-go/ens"
+	"github.com/things-go/ens/driver"
 )
 
 func Test_Tidb_SQL_Parse(t *testing.T) {
@@ -26,10 +27,8 @@ func Test_Tidb_SQL_Parse(t *testing.T) {
 			// "CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`value1`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT" +
 			")ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公告-面向所有人的消息';"
 
-	d := &SQLTidb{
-		SQL: sql,
-	}
-	value, err := d.InspectSchema(context.Background(), nil)
+	d := &SQLTidb{}
+	value, err := d.InspectSchema(context.Background(), &driver.InspectOption{SQL: sql})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,10 +52,8 @@ func Test_SQL_Parse(t *testing.T) {
 			"KEY `uk_value1_value2` (`value1`,`value2`) USING BTREE" +
 			")ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公告-面向所有人的消息';"
 
-	d := &SQL{
-		SQL: sql,
-	}
-	value, err := d.InspectSchema(context.Background(), nil)
+	d := &SQL{}
+	value, err := d.InspectSchema(context.Background(), &driver.InspectOption{SQL: sql})
 	if err != nil {
 		t.Fatal(err)
 	}

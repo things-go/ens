@@ -6,7 +6,6 @@ import (
 	_ "ariga.io/atlas/sql/mysql"
 	_ "github.com/go-sql-driver/mysql"
 
-	"ariga.io/atlas/sql/schema"
 	"ariga.io/atlas/sql/sqlclient"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
@@ -14,17 +13,14 @@ import (
 
 var _ driver.Driver = (*MySQL)(nil)
 
-type MySQL struct {
-	// URL See: https://atlasgo.io/url
-	URL string
-}
+type MySQL struct{}
 
-func (self *MySQL) InspectSchema(ctx context.Context, opts *schema.InspectOptions) (ens.Schemaer, error) {
-	client, err := sqlclient.Open(ctx, self.URL)
+func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (ens.Schemaer, error) {
+	client, err := sqlclient.Open(ctx, arg.URL)
 	if err != nil {
 		return nil, err
 	}
-	schemaes, err := client.InspectSchema(ctx, "", opts)
+	schemaes, err := client.InspectSchema(ctx, "", &arg.InspectOptions)
 	if err != nil {
 		return nil, err
 	}

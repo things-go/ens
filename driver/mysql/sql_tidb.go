@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/things-go/ens"
+	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/sqlx"
 
 	"ariga.io/atlas/sql/mysql"
@@ -18,14 +19,12 @@ import (
 	_ "github.com/pingcap/tidb/parser/test_driver"
 )
 
-type SQLTidb struct {
-	SQL string
-}
+type SQLTidb struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQLTidb) InspectSchema(context.Context, *schema.InspectOptions) (ens.Schemaer, error) {
+func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption) (ens.Schemaer, error) {
 	pr := parser.New()
-	stmts, _, err := pr.ParseSQL(self.SQL)
+	stmts, _, err := pr.ParseSQL(arg.SQL)
 	if err != nil {
 		return nil, err
 	}

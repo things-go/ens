@@ -17,13 +17,11 @@ import (
 
 var _ driver.Driver = (*SQL)(nil)
 
-type SQL struct {
-	SQL string
-}
+type SQL struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQL) InspectSchema(context.Context, *schema.InspectOptions) (ens.Schemaer, error) {
-	statement, err := sqlparser.Parse(self.SQL)
+func (self *SQL) InspectSchema(_ context.Context, arg *driver.InspectOption) (ens.Schemaer, error) {
+	statement, err := sqlparser.Parse(arg.SQL)
 	if err != nil {
 		return nil, err
 	}
