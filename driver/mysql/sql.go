@@ -21,7 +21,7 @@ type SQL struct{}
 
 // InspectSchema implements driver.Driver.
 func (self *SQL) InspectSchema(_ context.Context, arg *driver.InspectOption) (ens.Schemaer, error) {
-	statement, err := sqlparser.Parse(arg.SQL)
+	statement, err := sqlparser.Parse(arg.Data)
 	if err != nil {
 		return nil, err
 	}

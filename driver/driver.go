@@ -48,8 +48,8 @@ func DriverNames() []string {
 type InspectOption struct {
 	// URL See: https://atlasgo.io/url
 	URL string
-	// sql content, for file
-	SQL string
+	// sql data, for file
+	Data string
 	// InspectOptions describes options for Inspector.
 	schema.InspectOptions
 }

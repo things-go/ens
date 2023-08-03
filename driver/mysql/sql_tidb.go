@@ -24,7 +24,7 @@ type SQLTidb struct{}
 // InspectSchema implements driver.Driver.
 func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption) (ens.Schemaer, error) {
 	pr := parser.New()
-	stmts, _, err := pr.ParseSQL(arg.SQL)
+	stmts, _, err := pr.ParseSQL(arg.Data)
 	if err != nil {
 		return nil, err
 	}

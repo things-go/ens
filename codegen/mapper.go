@@ -44,31 +44,34 @@ func (g *CodeGen) GenMapper() *CodeGen {
 		if (et.Table != nil && et.Table.PrimaryKey() != nil) ||
 			len(et.Indexes) > 0 || len(et.ForeignKeys) > 0 {
 			g.P("option (things_go.seaql.options) = {")
-			g.P("index: [")
-			remain := len(et.Indexes)
-			if et.Table != nil && et.Table.PrimaryKey() != nil {
-				ending := commaOrEmpty(remain)
-				g.P("'", et.Table.PrimaryKey().Definition(), "'", ending)
-			}
-			for _, index := range et.Indexes {
-				remain--
-				if et.Table != nil &&
-					et.Table.PrimaryKey() != nil &&
-					et.Table.PrimaryKey().Index().Name == index.Name {
-					continue
+			if (et.Table != nil && et.Table.PrimaryKey() != nil) || len(et.Indexes) > 0 {
+				g.P("index: [")
+				remain := len(et.Indexes)
+				if et.Table != nil && et.Table.PrimaryKey() != nil {
+					ending := commaOrEmpty(remain)
+					g.P("'", et.Table.PrimaryKey().Definition(), "'", ending)
 				}
-				ending := commaOrEmpty(remain)
-				g.P("'", index.Index.Definition(), "'", ending)
+				for _, index := range et.Indexes {
+					remain--
+					if et.Table != nil &&
+						et.Table.PrimaryKey() != nil &&
+						et.Table.PrimaryKey().Index().Name == index.Name {
+						continue
+					}
+					ending := commaOrEmpty(remain)
+					g.P("'", index.Index.Definition(), "'", ending)
+				}
 			}
 			g.P("],")
-			g.P("foreign_key: [")
-			remain = len(et.ForeignKeys)
-			for _, fk := range et.ForeignKeys {
-				remain--
-				ending := commaOrEmpty(remain)
-				g.P("'", fk.ForeignKey.Definition(), "'", ending)
+			if remain := len(et.ForeignKeys); remain > 0 {
+				g.P("foreign_key: [")
+				for _, fk := range et.ForeignKeys {
+					remain--
+					ending := commaOrEmpty(remain)
+					g.P("'", fk.ForeignKey.Definition(), "'", ending)
+				}
+				g.P("],")
 			}
-			g.P("],")
 			g.P("};")
 		}
 		g.P()
