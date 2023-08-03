@@ -102,9 +102,13 @@ func parserCreateTableStmtColumn(col *ast.ColumnDef) (*schema.Column, error) {
 		case ast.ColumnOptionAutoIncrement:
 			coldef.AddAttrs(&mysql.AutoIncrement{})
 		case ast.ColumnOptionDefaultValue:
-			coldef.Default = &schema.Literal{V: formatExprNode(opt.Expr)}
+			val := formatExprNode(opt.Expr)
+			if !strings.EqualFold(val, "null") {
+				coldef.Default = &schema.Literal{V: strings.Trim(formatExprNode(opt.Expr), `"`)}
+			}
+
 		case ast.ColumnOptionComment:
-			coldef.AddAttrs(&schema.Comment{Text: formatExprNode(opt.Expr)})
+			coldef.AddAttrs(&schema.Comment{Text: strings.Trim(formatExprNode(opt.Expr), `"`)})
 		}
 	}
 
@@ -338,5 +342,5 @@ func formatExprNode(e ast.ExprNode) string {
 	}
 	b := &strings.Builder{}
 	e.Format(b)
-	return strings.Trim(b.String(), `"`)
+	return b.String()
 }
