@@ -54,6 +54,7 @@ var typeDictMatchList = []struct {
 	{`^(bit)\b[(]\d+[)]`, ens.BytesType},                      // []uint8
 	{`^(json)\b`, ens.JSONRawMessageType},                     // datatypes.JSON
 	{`^(enum)\b[(](.)+[)]`, ens.StringType},                   // string
+	{`^(set)\b[(](.)+[)]`, ens.StringType},                    // string
 	{`^(decimal)\b[(]\d+,\d+[)]`, ens.DecimalType},            // string
 	{`^(binary)\b[(]\d+[)]`, ens.BytesType},                   // []byte
 	{`^(varbinary)\b[(]\d+[)]`, ens.BytesType},                // []byte
