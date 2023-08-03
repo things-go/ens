@@ -18,12 +18,12 @@ import (
 var _ driver.Driver = (*SQL)(nil)
 
 type SQL struct {
-	CreateTableSQL string
+	SQL string
 }
 
 // InspectSchema implements driver.Driver.
 func (self *SQL) InspectSchema(context.Context, *schema.InspectOptions) (ens.Schemaer, error) {
-	statement, err := sqlparser.Parse(self.CreateTableSQL)
+	statement, err := sqlparser.Parse(self.SQL)
 	if err != nil {
 		return nil, err
 	}

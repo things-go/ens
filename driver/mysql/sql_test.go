@@ -54,7 +54,7 @@ func Test_SQL_Parse(t *testing.T) {
 			")ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公告-面向所有人的消息';"
 
 	d := &SQL{
-		CreateTableSQL: sql,
+		SQL: sql,
 	}
 	value, err := d.InspectSchema(context.Background(), nil)
 	if err != nil {
