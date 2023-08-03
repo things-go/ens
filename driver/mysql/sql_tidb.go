@@ -18,12 +18,12 @@ import (
 	_ "github.com/pingcap/tidb/parser/test_driver"
 )
 
-type SQLx struct {
+type SQLTidb struct {
 	SQL string
 }
 
 // InspectSchema implements driver.Driver.
-func (self *SQLx) InspectSchema(context.Context, *schema.InspectOptions) (ens.Schemaer, error) {
+func (self *SQLTidb) InspectSchema(context.Context, *schema.InspectOptions) (ens.Schemaer, error) {
 	pr := parser.New()
 	stmts, _, err := pr.ParseSQL(self.SQL)
 	if err != nil {

@@ -26,7 +26,7 @@ func Test_Tidb_SQL_Parse(t *testing.T) {
 			"CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`value1`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT" +
 			")ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公告-面向所有人的消息';"
 
-	d := &SQLx{
+	d := &SQLTidb{
 		SQL: sql,
 	}
 	value, err := d.InspectSchema(context.Background(), nil)
