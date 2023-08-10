@@ -232,24 +232,6 @@ func genAssistOtherImpl(g *CodeGen, et *ens.EntityDescriptor, typeNative, struct
 			P("}").
 			P()
 	}
-	//* method X_SelectExpr. Deprecated
-	{
-		g.
-			P("// X_SelectExpr select model fields").
-			P("// Deprecated use Select_Expr instead.").
-			P("func (x *", typeNative, ") X_SelectExpr() []assist.Expr {").
-			P("return x.Select_Expr()").
-			P("}")
-	}
-	//* method X_SelectVariantExpr. Deprecated
-	{
-		g.
-			P("// X_SelectVariantExpr select model fields, but time.Time field convert to timestamp(int64).").
-			P("// Deprecated use Select_VariantExpr instead.").
-			P("func (x *", typeNative, ") X_SelectVariantExpr(prefixes ...string) []assist.Expr {").
-			P("return x.Select_VariantExpr(prefixes...)").
-			P("}")
-	}
 }
 
 func genAssist_SelectVariantExprField(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {

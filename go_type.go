@@ -2,9 +2,8 @@ package ens
 
 import (
 	"reflect"
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 )
 
 var typeNames = [...]string{
