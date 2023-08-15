@@ -54,14 +54,16 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 				fieldName := utils.CamelCase(field.Name)
 				g.P(constFieldFn(structName, fieldName), ` = "`, field.Name, `"`)
 			}
-			g.P("// hold model `", structName, "` column name with table name(`", tableName, "`) prefix")
-			for _, field := range et.Fields {
-				fieldName := utils.CamelCase(field.Name)
-				g.P(
-					constFieldWithTableNameFn(structName, fieldName),
-					" = ",
-					constTableName, ` + "_" + `, constFieldFn(structName, fieldName),
-				)
+			if g.disableFields {
+				g.P("// hold model `", structName, "` column name with table name(`", tableName, "`) prefix")
+				for _, field := range et.Fields {
+					fieldName := utils.CamelCase(field.Name)
+					g.P(
+						constFieldWithTableNameFn(structName, fieldName),
+						" = ",
+						constTableName, ` + "_" + `, constFieldFn(structName, fieldName),
+					)
+				}
 			}
 			g.P(")")
 			g.P()
@@ -157,23 +159,25 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 				P("}").
 				P()
 
-			for _, field := range et.Fields {
-				fieldName := utils.CamelCase(field.Name)
-				columnName := field.Name
-				//* method Field_xxx
-				g.
-					P("// Field_", fieldName, " hold model `", structName, "` column name.").
-					P("// if prefixes not exist returns `", columnName, "`, others `{prefixes[0]}_", columnName, "`").
-					P("func (*", typeNative, ") Field_", fieldName, "(prefixes ...string) string {").
-					P("if len(prefixes) == 0 {").
-					P("return ", constFieldFn(structName, fieldName)).
-					P("}").
-					P("if prefixes[0] == ", constTableName, " {").
-					P("return ", constFieldWithTableNameFn(structName, fieldName)).
-					P("}").
-					P(`return prefixes[0] + "_" + `, constFieldFn(structName, fieldName)).
-					P("}").
-					P()
+			if g.disableFields {
+				for _, field := range et.Fields {
+					fieldName := utils.CamelCase(field.Name)
+					columnName := field.Name
+					//* method Field_xxx
+					g.
+						P("// Field_", fieldName, " hold model `", structName, "` column name.").
+						P("// if prefixes not exist returns `", columnName, "`, others `{prefixes[0]}_", columnName, "`").
+						P("func (*", typeNative, ") Field_", fieldName, "(prefixes ...string) string {").
+						P("if len(prefixes) == 0 {").
+						P("return ", constFieldFn(structName, fieldName)).
+						P("}").
+						P("if prefixes[0] == ", constTableName, " {").
+						P("return ", constFieldWithTableNameFn(structName, fieldName)).
+						P("}").
+						P(`return prefixes[0] + "_" + `, constFieldFn(structName, fieldName)).
+						P("}").
+						P()
+				}
 			}
 		}
 		{ // other method
@@ -217,14 +221,14 @@ func genAssistOtherImpl(g *CodeGen, et *ens.EntityDescriptor, typeNative, struct
 			P("if len(prefixes) > 0 {").
 			P("return []assist.Expr{")
 		for _, field := range et.Fields {
-			g.P(genAssist_SelectVariantExprField(structName, field, true))
+			g.P(genAssist_SelectVariantExprField(structName, field, true, g.disableFields))
 		}
 		g.
 			P("}").
 			P("} else {").
 			P("return []assist.Expr{")
 		for _, field := range et.Fields {
-			g.P(genAssist_SelectVariantExprField(structName, field, false))
+			g.P(genAssist_SelectVariantExprField(structName, field, false, g.disableFields))
 		}
 		g.
 			P("}").
@@ -234,10 +238,10 @@ func genAssistOtherImpl(g *CodeGen, et *ens.EntityDescriptor, typeNative, struct
 	}
 }
 
-func genAssist_SelectVariantExprField(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
+func genAssist_SelectVariantExprField(structName string, field *ens.FieldDescriptor, hasPrefix, disableFields bool) string {
 	fieldName := utils.CamelCase(field.Name)
 
-	b := strings.Builder{}
+	b := &strings.Builder{}
 	b.Grow(64)
 	b.WriteString("x.")
 	b.WriteString(fieldName)
@@ -247,15 +251,19 @@ func genAssist_SelectVariantExprField(structName string, field *ens.FieldDescrip
 			b.WriteString(".IfNull(0)")
 		}
 		if !hasPrefix {
-			b.WriteString(".As(")
-			b.WriteString(fmt.Sprintf(`xx_%s_%s`, structName, fieldName))
-			b.WriteString(")")
+			if disableFields {
+				fmt.Fprintf(b, ".As(xx_%s_%s", structName, fieldName)
+			} else {
+				fmt.Fprintf(b, "As(x.%s.FieldName(xx_%s_TableName))", fieldName, structName)
+			}
 		}
 	}
 	if hasPrefix {
-		b.WriteString(".As(x.Field_")
-		b.WriteString(fieldName)
-		b.WriteString("(prefixes...))")
+		if disableFields {
+			fmt.Fprintf(b, ".As(x.Field_%s(prefixes...))", fieldName)
+		} else {
+			fmt.Fprintf(b, ".As(x.%s.FieldName(prefixes...))", fieldName)
+		}
 	}
 	b.WriteString(",")
 	return b.String()

@@ -1,6 +1,6 @@
 module github.com/things-go/ens
 
-go 1.21
+go 1.20
 
 require (
 	ariga.io/atlas v0.13.1

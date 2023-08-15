@@ -2,8 +2,9 @@ package ens
 
 import (
 	"reflect"
-	"slices"
 	"strings"
+
+	"github.com/things-go/ens/utils"
 )
 
 var typeNames = [...]string{
@@ -226,6 +227,6 @@ func NewGoType(t Type, v any) *GoType {
 		Ident:        tt.String(),
 		PkgPath:      tv.PkgPath(),
 		PkgQualifier: PkgQualifier(tv.String()),
-		Nullable:     slices.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
+		Nullable:     utils.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
 	}
 }

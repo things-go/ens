@@ -18,6 +18,7 @@ type CodeGen struct {
 	skipColumns       map[string]struct{}
 	hasColumn         bool
 	disableDocComment bool
+	disableFields     bool
 }
 
 type Option func(*CodeGen)
@@ -65,6 +66,12 @@ func WithHasColumn(b bool) Option {
 func WithDisableDocComment(b bool) Option {
 	return func(g *CodeGen) {
 		g.disableDocComment = b
+	}
+}
+
+func WithDisableFields(b bool) Option {
+	return func(g *CodeGen) {
+		g.disableFields = b
 	}
 }
 
