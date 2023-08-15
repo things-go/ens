@@ -251,11 +251,7 @@ func genAssist_SelectVariantExprField(structName string, field *ens.FieldDescrip
 			b.WriteString(".IfNull(0)")
 		}
 		if !hasPrefix {
-			if disableField {
-				fmt.Fprintf(b, ".As(x.%s.FieldName(xx_%s_TableName))", fieldName, structName)
-			} else {
-				fmt.Fprintf(b, ".As(xx_%s_%s)", structName, fieldName)
-			}
+			fmt.Fprintf(b, ".As(xx_%s_%s)", structName, fieldName)
 		}
 	}
 	if hasPrefix {
