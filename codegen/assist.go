@@ -162,7 +162,7 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		{
 			g.Println("// Select_VariantExpr select model fields, but time.Time field convert to timestamp(int64).")
 			g.Printf("func (x *%s) Select_VariantExpr(prefixes ...string) []assist.Expr {\n", typeNative)
-			g.Println("if len(prefixes) > 0 {")
+			g.Println("if len(prefixes) > 0 && prefixes[0] != \"\" {")
 			g.Println("return []assist.Expr{")
 			for _, field := range et.Fields {
 				g.Println(genAssist_SelectVariantExprField(structName, field, true))
