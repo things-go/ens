@@ -18,7 +18,6 @@ type CodeGen struct {
 	skipColumns       map[string]struct{}
 	hasColumn         bool
 	disableDocComment bool
-	disableField      bool
 }
 
 type Option func(*CodeGen)
@@ -69,12 +68,6 @@ func WithDisableDocComment(b bool) Option {
 	}
 }
 
-func WithDisableField(b bool) Option {
-	return func(g *CodeGen) {
-		g.disableField = b
-	}
-}
-
 func New(md []*ens.EntityDescriptor, opts ...Option) *CodeGen {
 	g := &CodeGen{
 		entities:    md,
@@ -111,13 +104,22 @@ func (g *CodeGen) Write(b []byte) (n int, err error) {
 	return g.buf.Write(b)
 }
 
-// P prints a line to the generated output. It converts each parameter to a
-// string following the same rules as fmt.Print. It never inserts spaces
-// between parameters.
-func (g *CodeGen) P(args ...any) *CodeGen {
-	for _, arg := range args {
-		fmt.Fprint(&g.buf, arg)
-	}
-	fmt.Fprintln(&g.buf)
-	return g
+// Print formats using the default formats for its operands and writes to the generated output.
+// Spaces are added between operands when neither is a string.
+// It returns the number of bytes written and any write error encountered.
+func (g *CodeGen) Print(a ...any) (n int, err error) {
+	return fmt.Fprint(&g.buf, a...)
+}
+
+// Printf formats according to a format specifier for its operands and writes to the generated output.
+// It returns the number of bytes written and any write error encountered.
+func (g *CodeGen) Printf(format string, a ...any) (n int, err error) {
+	return fmt.Fprintf(&g.buf, format, a...)
+}
+
+// Fprintln formats using the default formats to the generated output.
+// Spaces are always added between operands and a newline is appended.
+// It returns the number of bytes written and any write error encountered.
+func (g *CodeGen) Println(a ...any) (n int, err error) {
+	return fmt.Fprintln(&g.buf, a...)
 }
