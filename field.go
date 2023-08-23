@@ -12,11 +12,11 @@ import (
 
 type FieldDescriptor struct {
 	Name     string // field name
-	Comment  string // comment
+	Comment  string // field comment
 	Nullable bool   // Nullable reports whether the column may be null.
 	Column   ColumnDef
 	// for go
-	Type           *GoType  //  go type information.
+	Type           *GoType  // go type information.
 	Optional       bool     // nullable struct field.
 	Tags           []string // Tags struct tag
 	AssistDataType string   // assist data type

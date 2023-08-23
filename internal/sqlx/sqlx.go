@@ -64,8 +64,7 @@ func Collation(elements []schema.Attr) (string, bool) {
 
 // DefaultValue returns the string represents the DEFAULT of a column.
 func DefaultValue(c *schema.Column) (string, bool) {
-	// switch x := schema.UnderlyingExpr(c.Default).(type) {
-	switch x := c.Default.(type) {
+	switch x := schema.UnderlyingExpr(c.Default).(type) {
 	case nil:
 		return "", false
 	case *schema.Literal:
