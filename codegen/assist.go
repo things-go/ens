@@ -52,11 +52,9 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 			g.Println()
 		}
 
-		varNativeModel := fmt.Sprintf(`xxx_%s_Native_Model`, structName)
 		varModel := fmt.Sprintf(`xxx_%s_Model`, structName)
 		funcInnerNew := fmt.Sprintf(`new_%s`, structName)
 		{ //* var field
-			g.Printf("var %s = %s (\"\")\n", varNativeModel, funcInnerNew)
 			g.Printf("var %s = %s (%s)\n", varModel, funcInnerNew, constTableName)
 			g.Println()
 		}
@@ -99,12 +97,9 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		{
 			g.Printf("// New_%s new instance.\n", structName)
 			g.Printf("func New_%s(xAlias string) %s {\n", structName, typeNative)
-			g.Println("switch xAlias {")
-			g.Println(`case "":`)
-			g.Printf("return %s\n", varNativeModel)
-			g.Printf("case %s:\n", constTableName)
+			g.Printf("if xAlias == %s {\n", constTableName)
 			g.Printf("return %s\n", varModel)
-			g.Println("default:")
+			g.Println("} else {")
 			g.Printf("return %s(xAlias)\n", funcInnerNew)
 			g.Println("}")
 			g.Println("}")
