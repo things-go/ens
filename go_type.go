@@ -129,7 +129,7 @@ func (t Type) IntoProtoDataType() string {
 	return dataType
 }
 
-func (t Type) IntoAssistDataType() string {
+func (t Type) IntoRapierDataType() string {
 	switch t {
 	case TypeBool,
 		TypeInt8, TypeInt16, TypeInt32, TypeInt64, TypeInt,

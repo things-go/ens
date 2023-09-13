@@ -8,8 +8,7 @@ import (
 	"github.com/things-go/ens/utils"
 )
 
-// Deprecated: Don't use this, deprecated next major version.
-func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
+func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 	pkgQualifierPrefix := ""
 	if p := ens.PkgName(modelImportPath); p != "" {
 		pkgQualifierPrefix = p + "."
@@ -28,7 +27,7 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		g.Printf("\"%s\"\n", modelImportPath)
 		g.Println()
 	}
-	g.Println(`assist "github.com/things-go/gorm-assist"`)
+	g.Println(`rapier "github.com/thinkgos/gorm-rapier"`)
 	g.Println(`"gorm.io/gorm"`)
 	g.Println(")")
 
@@ -65,9 +64,9 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		{
 			g.Printf("type %s struct {\n", typeNative)
 			g.Println("xAlias string")
-			g.Println("ALL assist.Asterisk")
+			g.Println("ALL rapier.Asterisk")
 			for _, field := range et.Fields {
-				g.Printf("%s assist.%s\n", utils.CamelCase(field.Name), field.RapierDataType)
+				g.Printf("%s rapier.%s\n", utils.CamelCase(field.Name), field.RapierDataType)
 			}
 			g.Println("}")
 			g.Println()
@@ -85,10 +84,10 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 			g.Printf("func %s(xAlias string) %s {\n", funcInnerNew, typeNative)
 			g.Printf("return %s {\n", typeNative)
 			g.Println("xAlias: xAlias,")
-			g.Println("ALL:  assist.NewAsterisk(xAlias),")
+			g.Println("ALL:  rapier.NewAsterisk(xAlias),")
 			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
-				g.Printf("%s: assist.New%s(xAlias, %s),\n", fieldName, field.RapierDataType, constField(structName, fieldName))
+				g.Printf("%s: rapier.New%s(xAlias, %s),\n", fieldName, field.RapierDataType, constField(structName, fieldName))
 			}
 			g.Println("}")
 			g.Println("}")
@@ -136,16 +135,16 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		{
 			modelName := pkgQualifierPrefix + structName
 			g.Println("// New_Executor new entity executor which suggest use only once.")
-			g.Printf("func (*%s) New_Executor(db *gorm.DB) *assist.Executor[%s] {\n", typeNative, modelName)
-			g.Printf("return assist.NewExecutor[%s](db)\n", modelName)
+			g.Printf("func (*%s) New_Executor(db *gorm.DB) *rapier.Executor[%s] {\n", typeNative, modelName)
+			g.Printf("return rapier.NewExecutor[%s](db)\n", modelName)
 			g.Println("}")
 			g.Println()
 		}
 		//* method Select_Expr
 		{
 			g.Println("// Select_Expr select model fields")
-			g.Printf("func (x *%s) Select_Expr() []assist.Expr {\n", typeNative)
-			g.Println("return []assist.Expr{")
+			g.Printf("func (x *%s) Select_Expr() []rapier.Expr {\n", typeNative)
+			g.Println("return []rapier.Expr{")
 			for _, field := range et.Fields {
 				g.Printf("x.%s,\n", utils.CamelCase(field.Name))
 			}
@@ -157,17 +156,17 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 		//* method Select_VariantExpr
 		{
 			g.Println("// Select_VariantExpr select model fields, but time.Time field convert to timestamp(int64).")
-			g.Printf("func (x *%s) Select_VariantExpr(prefixes ...string) []assist.Expr {\n", typeNative)
+			g.Printf("func (x *%s) Select_VariantExpr(prefixes ...string) []rapier.Expr {\n", typeNative)
 			g.Println("if len(prefixes) > 0 && prefixes[0] != \"\" {")
-			g.Println("return []assist.Expr{")
+			g.Println("return []rapier.Expr{")
 			for _, field := range et.Fields {
-				g.Println(genAssist_SelectVariantExprField(structName, field, true))
+				g.Println(genRapier_SelectVariantExprField(structName, field, true))
 			}
 			g.Println("}")
 			g.Println("} else {")
-			g.Println("return []assist.Expr{")
+			g.Println("return []rapier.Expr{")
 			for _, field := range et.Fields {
-				g.Println(genAssist_SelectVariantExprField(structName, field, false))
+				g.Println(genRapier_SelectVariantExprField(structName, field, false))
 			}
 			g.Println("}")
 			g.Println("}")
@@ -178,7 +177,7 @@ func (g *CodeGen) GenAssist(modelImportPath string) *CodeGen {
 	return g
 }
 
-func genAssist_SelectVariantExprField(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
+func genRapier_SelectVariantExprField(structName string, field *ens.FieldDescriptor, hasPrefix bool) string {
 	fieldName := utils.CamelCase(field.Name)
 
 	b := &strings.Builder{}

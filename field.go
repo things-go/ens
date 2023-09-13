@@ -19,7 +19,7 @@ type FieldDescriptor struct {
 	Type           *GoType  // go type information.
 	Optional       bool     // nullable struct field.
 	Tags           []string // Tags struct tag
-	AssistDataType string   // assist data type
+	RapierDataType string   // rapier data type
 }
 
 func (f *FieldDescriptor) goType(typ any) {
@@ -27,7 +27,7 @@ func (f *FieldDescriptor) goType(typ any) {
 }
 
 func (field *FieldDescriptor) build(opt *Option) {
-	field.AssistDataType = field.Type.Type.IntoAssistDataType()
+	field.RapierDataType = field.Type.Type.IntoRapierDataType()
 	if field.Name == "deleted_at" && field.Type.IsInteger() {
 		field.Optional = false
 		field.goType(soft_delete.DeletedAt(0))
@@ -40,25 +40,25 @@ func (field *FieldDescriptor) build(opt *Option) {
 		switch field.Type.Type {
 		case TypeInt8, TypeInt16, TypeInt32:
 			field.goType(int(0))
-			field.AssistDataType = TypeInt.IntoAssistDataType()
+			field.RapierDataType = TypeInt.IntoRapierDataType()
 		case TypeUint8, TypeUint16, TypeUint32:
 			field.goType(uint(0))
-			field.AssistDataType = TypeUint.IntoAssistDataType()
+			field.RapierDataType = TypeUint.IntoRapierDataType()
 		}
 	}
 	if opt.EnableIntegerInt {
 		switch field.Type.Type {
 		case TypeInt32:
 			field.goType(int(0))
-			field.AssistDataType = TypeInt.IntoAssistDataType()
+			field.RapierDataType = TypeInt.IntoRapierDataType()
 		case TypeUint32:
 			field.goType(uint(0))
-			field.AssistDataType = TypeUint.IntoAssistDataType()
+			field.RapierDataType = TypeUint.IntoRapierDataType()
 		}
 	}
 	if opt.EnableBoolInt && field.Type.IsBool() {
 		field.goType(int(0))
-		field.AssistDataType = TypeInt.IntoAssistDataType()
+		field.RapierDataType = TypeInt.IntoRapierDataType()
 	}
 	if field.Nullable && opt.DisableNullToPoint {
 		gt, ok := sqlNullValueGoType[field.Type.Type]
