@@ -2,8 +2,6 @@ module github.com/things-go/ens
 
 go 1.21
 
-toolchain go1.21.5
-
 require (
 	ariga.io/atlas v0.16.0
 	github.com/go-sql-driver/mysql v1.7.1
