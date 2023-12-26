@@ -22,16 +22,16 @@ func (t EntityDescriptorSlice) Less(i, j int) bool { return t[i].Name < t[j].Nam
 func (t EntityDescriptorSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
 func BuildEntity(m MixinEntity, opt *Option) *EntityDescriptor {
+	enableGogo, enableSea := false, false
+	if opt != nil {
+		enableGogo, enableSea = opt.EnableGogo, opt.EnableSea
+	}
 	fielders := m.Fields()
 	fields := make([]*FieldDescriptor, 0, len(fielders))
 	protoMessages := make([]*ProtoMessage, 0, len(fielders))
 	for _, fb := range fielders {
 		field := fb.Build(opt)
 		fields = append(fields, field)
-		enableGogo, enableSea := false, false
-		if opt != nil {
-			enableGogo, enableSea = opt.EnableGogo, opt.EnableSea
-		}
 		protoMessages = append(protoMessages, buildProtoMessage(field, enableGogo, enableSea))
 	}
 	indexers := m.Indexes()

@@ -26,58 +26,32 @@ func (g *CodeGen) GenMapper() *CodeGen {
 	}
 
 	g.Println(`import "protoc-gen-openapiv2/options/annotations.proto";`)
-	g.Println(`import "protosaber/seaql/seaql.proto";`)
-	g.Println(`// import "protosaber/enumerate/enumerate.proto";`)
 	g.Println()
 
 	for _, et := range g.entities {
 		structName := utils.CamelCase(et.Name)
-		commaOrEmpty := func(r int) string {
-			if r == 0 {
-				return ""
-			}
-			return ","
-		}
 
 		g.Printf("// %s %s\n", structName, trimStructComment(et.Comment, "\n", "\n// "))
-		g.Printf("message %s {\n", structName)
-		if (et.Table != nil && et.Table.PrimaryKey() != nil) ||
-			len(et.Indexes) > 0 || len(et.ForeignKeys) > 0 {
-			g.Println("option (things_go.seaql.options) = {")
-			if (et.Table != nil && et.Table.PrimaryKey() != nil) || len(et.Indexes) > 0 {
-				g.Println("index: [")
-				remain := len(et.Indexes)
-				if et.Table != nil && et.Table.PrimaryKey() != nil {
-					ending := commaOrEmpty(remain)
-					g.Printf("'%s'%s\n", et.Table.PrimaryKey().Definition(), ending)
-				}
-				for _, index := range et.Indexes {
-					remain--
-					if et.Table != nil &&
-						et.Table.PrimaryKey() != nil &&
-						et.Table.PrimaryKey().Index().Name == index.Name {
-						continue
-					}
-					ending := commaOrEmpty(remain)
-					g.Printf("'%s'%s\n", index.Index.Definition(), ending)
-				}
-			}
-			g.Println("],")
-			if remain := len(et.ForeignKeys); remain > 0 {
-				g.Println("foreign_key: [")
-				for _, fk := range et.ForeignKeys {
-					remain--
-					ending := commaOrEmpty(remain)
-					g.Printf("'%s'%s\n", fk.ForeignKey.Definition(), ending)
-				}
-				g.Println("],")
-			}
-			g.Println("};")
+
+		g.Printf("// #[seaql]\n")
+		if et.Table != nil && et.Table.PrimaryKey() != nil {
+			g.Printf("// #[seaql(index=\"%s\")]\n", et.Table.PrimaryKey().Definition())
 		}
-		g.Println()
+		for _, index := range et.Indexes {
+			if et.Table != nil &&
+				et.Table.PrimaryKey() != nil &&
+				et.Table.PrimaryKey().Index().Name == index.Name {
+				continue
+			}
+			g.Printf("// #[seaql(index=\"%s\")]\n", index.Index.Definition())
+		}
+		for _, fk := range et.ForeignKeys {
+			g.Printf("// #[seaql(foreign_key=\"%s\")]\n", fk.ForeignKey.Definition())
+		}
+		g.Printf("message %s {\n", structName)
 		for i, m := range et.ProtoMessage {
 			if m.Comment != "" {
-				g.Printf("// %s\n", m.Comment)
+				g.Printf("%s\n", m.Comment)
 			}
 			g.Println(genMapperMessageField(i+1, m))
 		}
