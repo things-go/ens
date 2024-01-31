@@ -31,31 +31,15 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 	g.Println(`"gorm.io/gorm"`)
 	g.Println(")")
 
-	constField := func(structName, fieldName string) string {
-		return fmt.Sprintf(`xx_%s_%s`, structName, fieldName)
-	}
 	//* struct
 	for _, et := range g.entities {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
 
-		constTableName := fmt.Sprintf("xx_%s_TableName", structName)
-		{ //* const field
-			g.Println("const (")
-			g.Printf("// hold model `%s` table name\n", structName)
-			g.Printf("%s = \"%s\"\n", constTableName, tableName)
-			g.Printf("// hold model `%s` column name\n", structName)
-			for _, field := range et.Fields {
-				g.Printf("%s = \"%s\"\n", constField(structName, utils.CamelCase(field.Name)), field.Name)
-			}
-			g.Println(")")
-			g.Println()
-		}
-
 		varModel := fmt.Sprintf(`xxx_%s_Model`, structName)
 		funcInnerNew := fmt.Sprintf(`new_%s`, structName)
 		{ //* var field
-			g.Printf("var %s = %s (%s)\n", varModel, funcInnerNew, constTableName)
+			g.Printf("var %s = %s (\"%s\")\n", varModel, funcInnerNew, tableName)
 			g.Println()
 		}
 
@@ -87,7 +71,7 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 			g.Println("ALL:  rapier.NewAsterisk(xAlias),")
 			for _, field := range et.Fields {
 				fieldName := utils.CamelCase(field.Name)
-				g.Printf("%s: rapier.New%s(xAlias, %s),\n", fieldName, field.RapierDataType, constField(structName, fieldName))
+				g.Printf("%s: rapier.New%s(xAlias, \"%s\"),\n", fieldName, field.RapierDataType, field.Name)
 			}
 			g.Println("}")
 			g.Println("}")
@@ -97,7 +81,7 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		{
 			g.Printf("// New_%s new instance.\n", structName)
 			g.Printf("func New_%s(xAlias string) %s {\n", structName, typeNative)
-			g.Printf("if xAlias == %s {\n", constTableName)
+			g.Printf("if xAlias == \"%s\" {\n", tableName)
 			g.Printf("return %s\n", varModel)
 			g.Println("} else {")
 			g.Printf("return %s(xAlias)\n", funcInnerNew)
@@ -126,7 +110,7 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 			//* method TableName
 			g.Printf("// TableName hold model `%s` table name returns `%s`.\n", structName, tableName)
 			g.Printf("func (*%s) TableName() string {\n", typeNative)
-			g.Printf("return %s\n", constTableName)
+			g.Printf("return \"%s\"\n", tableName)
 			g.Println("}")
 			g.Println()
 		}
