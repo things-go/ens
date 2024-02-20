@@ -57,8 +57,8 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		}
 		//* Deprecated: function X_xxx
 		{
-			g.Printf("// X_%s model with TableName `%s`.\n", structName, tableName)
 			g.Printf("// Deprecated: use Ref_%s instead\n", structName)
+			g.Printf("// X_%s model with TableName `%s`.\n", structName, tableName)
 			g.Printf("func X_%s() %s {\n", structName, typeNative)
 			g.Printf("return %s\n", varRefModel)
 			g.Println("}")
@@ -108,8 +108,8 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		}
 		//* Deprecated: method X_Alias
 		{
-			g.Printf("// X_Alias hold table name when call New_%[1]s or %[1]s_Native.As that you defined.\n", structName)
 			g.Println("// Deprecated: use Ref_Alias instead")
+			g.Printf("// X_Alias hold table name when call New_%[1]s or %[1]s_Native.As that you defined.\n", structName)
 			g.Printf("func (x *%s) X_Alias() string {\n", typeNative)
 			g.Println("return x.refAlias")
 			g.Println("}")
