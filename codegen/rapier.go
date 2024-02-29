@@ -36,10 +36,10 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
 
-		varRefModel := fmt.Sprintf(`ref_%s_Model`, structName)
+		varRefNative := fmt.Sprintf(`ref_%s_Native`, structName)
 		funcInnerNew := fmt.Sprintf(`new_%s`, structName)
 		{ //* var field
-			g.Printf("var %s = %s (\"%s\")\n", varRefModel, funcInnerNew, tableName)
+			g.Printf("var %s = %s (\"%s\", \"%s\")\n", varRefNative, funcInnerNew, tableName, tableName)
 			g.Println()
 		}
 
@@ -48,6 +48,7 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		{
 			g.Printf("type %s struct {\n", typeNative)
 			g.Println("refAlias string")
+			g.Println("refTableName string")
 			g.Println("ALL rapier.Asterisk")
 			for _, field := range et.Fields {
 				g.Printf("%s rapier.%s\n", utils.CamelCase(field.Name), field.RapierDataType)
@@ -55,69 +56,50 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 			g.Println("}")
 			g.Println()
 		}
-		//* Deprecated: function X_xxx
+		//* function new_xxx
 		{
-			g.Printf("// Deprecated: use Ref_%s instead\n", structName)
-			g.Printf("// X_%s model with TableName `%s`.\n", structName, tableName)
-			g.Printf("func X_%s() %s {\n", structName, typeNative)
-			g.Printf("return %s\n", varRefModel)
+			g.Printf("func %s(tableName, alias string) *%s {\n", funcInnerNew, typeNative)
+			g.Printf("return &%s {\n", typeNative)
+			g.Println("refAlias: alias,")
+			g.Println("refTableName: tableName,")
+			g.Println("ALL:  rapier.NewAsterisk(alias),")
+			for _, field := range et.Fields {
+				fieldName := utils.CamelCase(field.Name)
+				g.Printf("%s: rapier.New%s(alias, \"%s\"),\n", fieldName, field.RapierDataType, field.Name)
+			}
+			g.Println("}")
 			g.Println("}")
 			g.Println()
 		}
 		//* function Ref_xxx
 		{
 			g.Printf("// Ref_%s model with TableName `%s`.\n", structName, tableName)
-			g.Printf("func Ref_%s() %s {\n", structName, typeNative)
-			g.Printf("return %s\n", varRefModel)
-			g.Println("}")
-			g.Println()
-		}
-		//* function new_xxx
-		{
-			g.Printf("func %s(refAlias string) %s {\n", funcInnerNew, typeNative)
-			g.Printf("return %s {\n", typeNative)
-			g.Println("refAlias: refAlias,")
-			g.Println("ALL:  rapier.NewAsterisk(refAlias),")
-			for _, field := range et.Fields {
-				fieldName := utils.CamelCase(field.Name)
-				g.Printf("%s: rapier.New%s(refAlias, \"%s\"),\n", fieldName, field.RapierDataType, field.Name)
-			}
-			g.Println("}")
+			g.Println("// NOTE: Don't modify any public field!!!")
+			g.Printf("func Ref_%s() *%s {\n", structName, typeNative)
+			g.Printf("return %s\n", varRefNative)
 			g.Println("}")
 			g.Println()
 		}
 		//* function New_xxxx
 		{
 			g.Printf("// New_%s new instance.\n", structName)
-			g.Printf("func New_%s(refAlias string) %s {\n", structName, typeNative)
-			g.Printf("if refAlias == \"%s\" {\n", tableName)
-			g.Printf("return %s\n", varRefModel)
-			g.Println("} else {")
-			g.Printf("return %s(refAlias)\n", funcInnerNew)
-			g.Println("}")
+			g.Println("// NOTE: Don't modify any public field!!!")
+			g.Printf("func New_%s(tableName string) *%s {\n", structName, typeNative)
+			g.Printf("return %s(tableName, tableName)\n", funcInnerNew)
 			g.Println("}")
 			g.Println()
 		}
 		//* method As
 		{
 			g.Println("// As alias")
-			g.Printf("func (*%[1]s) As(alias string) %[1]s {\n", typeNative)
-			g.Printf("return New_%s(alias)\n", structName)
-			g.Println("}")
-			g.Println()
-		}
-		//* Deprecated: method X_Alias
-		{
-			g.Println("// Deprecated: use Ref_Alias instead")
-			g.Printf("// X_Alias hold table name when call New_%[1]s or %[1]s_Native.As that you defined.\n", structName)
-			g.Printf("func (x *%s) X_Alias() string {\n", typeNative)
-			g.Println("return x.refAlias")
+			g.Printf("func (x *%[1]s) As(alias string) *%[1]s {\n", typeNative)
+			g.Printf("return new_%s(x.refTableName, alias)\n", structName)
 			g.Println("}")
 			g.Println()
 		}
 		//* method Ref_Alias
 		{
-			g.Printf("// Ref_Alias hold table name when call New_%[1]s or %[1]s_Native.As that you defined.\n", structName)
+			g.Printf("// Ref_Alias hold alias name when call %[1]s_Native.As that you defined.\n", structName)
 			g.Printf("func (x *%s) Ref_Alias() string {\n", typeNative)
 			g.Println("return x.refAlias")
 			g.Println("}")
@@ -126,9 +108,9 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		// impl TableName interface
 		{
 			//* method TableName
-			g.Printf("// TableName hold model `%s` table name returns `%s`.\n", structName, tableName)
-			g.Printf("func (*%s) TableName() string {\n", typeNative)
-			g.Printf("return \"%s\"\n", tableName)
+			g.Printf("// TableName hold table name when call New_%[1]s that you defined.\n", structName)
+			g.Printf("func (x *%s) TableName() string {\n", typeNative)
+			g.Println("return x.refTableName")
 			g.Println("}")
 			g.Println()
 		}
