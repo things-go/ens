@@ -39,7 +39,7 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		varRefNative := fmt.Sprintf(`ref_%s_Native`, structName)
 		funcInnerNew := fmt.Sprintf(`new_%s`, structName)
 		{ //* var field
-			g.Printf("var %s = %s (\"%s\", \"%s\")\n", varRefNative, funcInnerNew, tableName, tableName)
+			g.Printf("var %s = New_%s(\"%s\")\n", varRefNative, structName, tableName)
 			g.Println()
 		}
 
@@ -93,7 +93,7 @@ func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 		{
 			g.Println("// As alias")
 			g.Printf("func (x *%[1]s) As(alias string) *%[1]s {\n", typeNative)
-			g.Printf("return new_%s(x.refTableName, alias)\n", structName)
+			g.Printf("return %s(x.refTableName, alias)\n", funcInnerNew)
 			g.Println("}")
 			g.Println()
 		}
