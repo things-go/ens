@@ -45,3 +45,7 @@ type MixinEntity interface {
 
 	Build(*Option) *EntityDescriptor
 }
+
+type Schemaer interface {
+	Build(opt *Option) *Schema
+}
