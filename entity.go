@@ -21,41 +21,6 @@ func (t EntityDescriptorSlice) Len() int           { return len(t) }
 func (t EntityDescriptorSlice) Less(i, j int) bool { return t[i].Name < t[j].Name }
 func (t EntityDescriptorSlice) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 
-func BuildEntity(m MixinEntity, opt *Option) *EntityDescriptor {
-	enableGogo, enableSea := false, false
-	if opt != nil {
-		enableGogo, enableSea = opt.EnableGogo, opt.EnableSea
-	}
-	fielders := m.Fields()
-	fields := make([]*FieldDescriptor, 0, len(fielders))
-	protoMessages := make([]*ProtoMessage, 0, len(fielders))
-	for _, fb := range fielders {
-		field := fb.Build(opt)
-		fields = append(fields, field)
-		protoMessages = append(protoMessages, buildProtoMessage(field, enableGogo, enableSea))
-	}
-	indexers := m.Indexes()
-	indexes := make([]*IndexDescriptor, 0, len(indexers))
-	for _, v := range indexers {
-		indexes = append(indexes, v.Build())
-	}
-	fkers := m.ForeignKeys()
-	fks := make([]*ForeignKeyDescriptor, 0, len(fkers))
-	for _, v := range fkers {
-		fks = append(fks, v.Build())
-	}
-	name, comment := m.Metadata()
-	return &EntityDescriptor{
-		Name:         name,
-		Comment:      comment,
-		Table:        m.Table(),
-		Fields:       fields,
-		Indexes:      indexes,
-		ForeignKeys:  fks,
-		ProtoMessage: protoMessages,
-	}
-}
-
 var _ MixinEntity = (*EntityBuilder)(nil)
 
 type EntityBuilder struct {
@@ -106,3 +71,37 @@ func (self *EntityBuilder) Table() TableDef                  { return self.table
 func (self *EntityBuilder) Fields() []Fielder                { return self.fields }
 func (self *EntityBuilder) Indexes() []Indexer               { return self.indexes }
 func (self *EntityBuilder) ForeignKeys() []ForeignKeyer      { return self.foreignKeys }
+func (self *EntityBuilder) Build(opt *Option) *EntityDescriptor {
+	enableGogo, enableSea := false, false
+	if opt != nil {
+		enableGogo, enableSea = opt.EnableGogo, opt.EnableSea
+	}
+	fielders := self.Fields()
+	fields := make([]*FieldDescriptor, 0, len(fielders))
+	protoMessages := make([]*ProtoMessage, 0, len(fielders))
+	for _, fb := range fielders {
+		field := fb.Build(opt)
+		fields = append(fields, field)
+		protoMessages = append(protoMessages, field.buildProtoMessage(enableGogo, enableSea))
+	}
+	indexers := self.Indexes()
+	indexes := make([]*IndexDescriptor, 0, len(indexers))
+	for _, v := range indexers {
+		indexes = append(indexes, v.Build())
+	}
+	fkers := self.ForeignKeys()
+	fks := make([]*ForeignKeyDescriptor, 0, len(fkers))
+	for _, v := range fkers {
+		fks = append(fks, v.Build())
+	}
+	name, comment := self.Metadata()
+	return &EntityDescriptor{
+		Name:         name,
+		Comment:      comment,
+		Table:        self.Table(),
+		Fields:       fields,
+		Indexes:      indexes,
+		ForeignKeys:  fks,
+		ProtoMessage: protoMessages,
+	}
+}

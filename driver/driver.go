@@ -17,7 +17,7 @@ const (
 var drivers sync.Map
 
 type Driver interface {
-	InspectSchema(context.Context, *InspectOption) (ens.Schemaer, error)
+	InspectSchema(context.Context, *InspectOption) (*ens.MixinSchema, error)
 }
 
 func RegisterDriver(name string, d Driver) {

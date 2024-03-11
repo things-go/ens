@@ -20,7 +20,7 @@ var _ driver.Driver = (*SQL)(nil)
 type SQL struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQL) InspectSchema(_ context.Context, arg *driver.InspectOption) (ens.Schemaer, error) {
+func (self *SQL) InspectSchema(_ context.Context, arg *driver.InspectOption) (*ens.MixinSchema, error) {
 	statement, err := sqlparser.Parse(arg.Data)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (self *SQL) InspectSchema(_ context.Context, arg *driver.InspectOption) (en
 		}
 		return &ens.MixinSchema{
 			Name:     "",
-			Entities: []ens.MixinEntity{IntoEntity(table)},
+			Entities: []ens.MixinEntity{IntoMixinEntity(table)},
 		}, nil
 	default:
 		return nil, errors.New("不是DDL语句")

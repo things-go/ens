@@ -15,7 +15,7 @@ type MixinSchema struct {
 func (self *MixinSchema) Build(opt *Option) *Schema {
 	entities := make([]*EntityDescriptor, 0, len(self.Entities))
 	for _, mixin := range self.Entities {
-		entities = append(entities, BuildEntity(mixin, opt))
+		entities = append(entities, mixin.Build(opt))
 	}
 	return &Schema{
 		Name:     self.Name,

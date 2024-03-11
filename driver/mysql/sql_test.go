@@ -57,5 +57,5 @@ func Test_SQL_Parse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(value.(*ens.MixinSchema).Entities[0].(*ens.EntityBuilder))
+	fmt.Println(value.Entities[0].(*ens.EntityBuilder))
 }

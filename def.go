@@ -24,16 +24,12 @@ type ForeignKeyDef interface {
 	Definition() string
 }
 
-type Schemaer interface {
-	Build(opt *Option) *Schema
-}
-
 type Indexer interface {
 	Build() *IndexDescriptor
 }
 
 type Fielder interface {
-	Build(opt *Option) *FieldDescriptor
+	Build(*Option) *FieldDescriptor
 }
 
 type ForeignKeyer interface {
@@ -46,4 +42,6 @@ type MixinEntity interface {
 	Fields() []Fielder
 	Indexes() []Indexer
 	ForeignKeys() []ForeignKeyer
+
+	Build(*Option) *EntityDescriptor
 }

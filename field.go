@@ -22,8 +22,8 @@ type FieldDescriptor struct {
 	RapierDataType string   // rapier data type
 }
 
-func (f *FieldDescriptor) goType(typ any) {
-	f.Type = NewGoType(f.Type.Type, typ)
+func (field *FieldDescriptor) goType(typ any) {
+	field.Type = NewGoType(field.Type.Type, typ)
 }
 
 func (field *FieldDescriptor) build(opt *Option) {

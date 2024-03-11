@@ -72,24 +72,24 @@ func intoGoType(columnType string) *ens.GoType {
 }
 
 type TableDef struct {
-	table *schema.Table
+	tb *schema.Table
 }
 
-func NewTableDef(tb *schema.Table) *TableDef {
-	return &TableDef{table: tb}
+func NewTableDef(tb *schema.Table) ens.TableDef {
+	return &TableDef{tb: tb}
 }
 
-func (self *TableDef) Table() *schema.Table { return self.table }
+func (self *TableDef) Table() *schema.Table { return self.tb }
 
 func (self *TableDef) PrimaryKey() ens.IndexDef {
-	if self.table.PrimaryKey != nil {
-		return NewIndexDef(self.table.PrimaryKey)
+	if self.tb.PrimaryKey != nil {
+		return NewIndexDef(self.tb.PrimaryKey)
 	}
 	return nil
 }
 
 func (self *TableDef) Definition() string {
-	tb := self.table
+	tb := self.tb
 
 	b := &strings.Builder{}
 	b.Grow(64)
@@ -167,7 +167,7 @@ type ColumnDef struct {
 	col *schema.Column
 }
 
-func NewColumnDef(col *schema.Column) *ColumnDef {
+func NewColumnDef(col *schema.Column) ens.ColumnDef {
 	return &ColumnDef{col: col}
 }
 
@@ -272,7 +272,7 @@ type IndexDef struct {
 	index *schema.Index
 }
 
-func NewIndexDef(index *schema.Index) *IndexDef {
+func NewIndexDef(index *schema.Index) ens.IndexDef {
 	return &IndexDef{index: index}
 }
 
@@ -296,7 +296,7 @@ type ForeignKeyDef struct {
 	fk *schema.ForeignKey
 }
 
-func NewForeignKey(fk *schema.ForeignKey) *ForeignKeyDef {
+func NewForeignKey(fk *schema.ForeignKey) ens.ForeignKeyDef {
 	return &ForeignKeyDef{fk: fk}
 }
 

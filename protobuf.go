@@ -9,7 +9,7 @@ type ProtoMessage struct {
 	Annotations []string // 注解
 }
 
-func buildProtoMessage(field *FieldDescriptor, enableGogo, enableSea bool) *ProtoMessage {
+func (field *FieldDescriptor) buildProtoMessage(enableGogo, enableSea bool) *ProtoMessage {
 	dataType := field.Type.Type.IntoProtoDataType()
 	annotations := make([]string, 0, 16)
 	if field.Type.Type == TypeInt64 ||

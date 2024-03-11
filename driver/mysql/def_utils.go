@@ -20,7 +20,7 @@ func findIndexType(attrs []schema.Attr) string {
 	}
 }
 
-func IntoEntity(tb *schema.Table) ens.MixinEntity {
+func IntoMixinEntity(tb *schema.Table) ens.MixinEntity {
 	// * columns
 	fielders := make([]ens.Fielder, 0, len(tb.Columns))
 	for _, col := range tb.Columns {
