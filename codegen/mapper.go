@@ -25,8 +25,10 @@ func (g *CodeGen) GenMapper() *CodeGen {
 		g.Println()
 	}
 
-	g.Println(`import "protoc-gen-openapiv2/options/annotations.proto";`)
-	g.Println()
+	if needOpenapiv2Annotation(g.entities) {
+		g.Println(`import "protoc-gen-openapiv2/options/annotations.proto";`)
+		g.Println()
+	}
 
 	for _, et := range g.entities {
 		structName := utils.CamelCase(et.Name)
@@ -66,4 +68,15 @@ func genMapperMessageField(seq int, m *ens.ProtoMessage) string {
 		annotation = fmt.Sprintf(" [%s]", strings.Join(m.Annotations, ", "))
 	}
 	return fmt.Sprintf("%s %s = %d%s;", m.DataType, m.Name, seq, annotation)
+}
+
+func needOpenapiv2Annotation(entities []*ens.EntityDescriptor) bool {
+	for _, entity := range entities {
+		for _, v := range entity.ProtoMessage {
+			if v.DataType == "int64" {
+				return true
+			}
+		}
+	}
+	return false
 }
