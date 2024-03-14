@@ -1,6 +1,11 @@
 package ens
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/things-go/ens/matcher"
+)
 
 type ProtoMessage struct {
 	DataType    string   // 数据类型
@@ -23,7 +28,8 @@ func (field *FieldDescriptor) buildProtoMessage(enableGogo, enableSea bool) *Pro
 			annotations = append(annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 		}
 	}
-	comment := field.Comment
+
+	comment := strings.TrimSuffix(matcher.TrimEnumValue(field.Comment), ",")
 	if comment != "" {
 		comment = "// " + comment
 	}

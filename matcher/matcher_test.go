@@ -5,7 +5,7 @@ import (
 )
 
 func Test_rJSONTag(t *testing.T) {
-	t.Logf("%#v", rJSONTag.FindStringSubmatch(` 11 [@jsontag: id,omitempty,string] 11k [@affix]l23123 人11`))
+	t.Logf("%#v", reJSONTag.FindStringSubmatch(` 11 [@jsontag: id,omitempty,string] 11k [@affix]l23123 人11`))
 }
 
 func Test_jsonTag(t *testing.T) {
@@ -45,7 +45,7 @@ func Test_jsonTag(t *testing.T) {
 }
 
 func Test_rAffixJSONTag(t *testing.T) {
-	t.Logf("%#v", rAffixJSONTag.FindStringSubmatch(`11大11111朋 111 11 [@affix] 11k l23123111 人11`))
+	t.Logf("%#v", reAffixJSONTag.FindStringSubmatch(`11大11111朋 111 11 [@affix] 11k l23123111 人11`))
 }
 
 func Test_hasAffixJSONTag(t *testing.T) {
@@ -83,4 +83,50 @@ func Test_hasAffixJSONTag(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_ProtobufType(t *testing.T) {
+	tests := []struct {
+		name    string
+		comment string
+		want    string
+	}{
+		{
+			"",
+			"11 [@pbtype:E.Gender] 11",
+			"E.Gender",
+		},
+		{
+			"",
+			"11 [@pbtype: E.Gender] 11",
+			"E.Gender",
+		},
+		{
+			"",
+			"11 [@ pbtype: id,omitempty,string] 11",
+			"",
+		},
+		{
+			"",
+			"11 [@pbtype: E.Gender] 11, [@affix]",
+			"E.Gender",
+		},
+		{
+			"",
+			"11 @pbtype[1:a,2:3] 11, [@affix]",
+			"",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := PbType(tt.comment); got != tt.want {
+				t.Errorf("PbEnumType() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_TrimEnumValue(t *testing.T) {
+	a := TrimEnumValue("some text@EnumValue[1:a,2:哈哈]")
+	t.Log(a)
 }
