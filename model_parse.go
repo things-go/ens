@@ -3,8 +3,10 @@ package ens
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/things-go/ens/utils"
+	"gorm.io/gorm/schema"
 )
 
 func ParseModel(v any) (MixinEntity, error) {
@@ -59,15 +61,10 @@ func structFieldToFielder(fv reflect.StructField) Fielder {
 	}
 
 	fieldName := utils.SnakeCase(fv.Name)
-	// setting := schema.ParseTagSetting(fv.Tag.Get("gorm"), ";")
-	// if v, ok := setting["COLUMN"]; ok && v != "" {
-	// 	fieldName = v
-	// }
-
 	ident := fvt.String()
 	return Field(
 		&GoType{
-			Type:         intoGoTypeType(fvt.Kind(), ident),
+			Type:         intoGoTypeType(fvt, fv.Tag),
 			Ident:        ident,
 			PkgPath:      fvt.PkgPath(),
 			PkgQualifier: PkgQualifier(ident),
@@ -77,8 +74,9 @@ func structFieldToFielder(fv reflect.StructField) Fielder {
 	)
 }
 
-func intoGoTypeType(kind reflect.Kind, ident string) Type {
-	switch kind {
+func intoGoTypeType(t reflect.Type, tag reflect.StructTag) Type {
+	ident := t.String()
+	switch t.Kind() {
 	case reflect.Bool:
 		return TypeBool
 	case reflect.Int:
@@ -106,10 +104,14 @@ func intoGoTypeType(kind reflect.Kind, ident string) Type {
 	case reflect.Float64:
 		return TypeFloat64
 	case reflect.String:
+		typeValue := schema.ParseTagSetting(tag.Get("gorm"), ";")["TYPE"]
+		if strings.Contains(strings.ToUpper(typeValue), "DECIMAL") {
+			return TypeDecimal
+		}
 		return TypeString
 	case reflect.Struct:
 		switch ident {
-		case "time.Time", "sql.NullTime":
+		case "time.Time", "sql.NullTime", "datatypes.Date":
 			return TypeTime
 		case "sql.NullBool":
 			return TypeBool
@@ -129,11 +131,12 @@ func intoGoTypeType(kind reflect.Kind, ident string) Type {
 			return TypeOther
 		}
 	case reflect.Slice:
-		if ident == "json.RawMessage" {
+		if ident == "json.RawMessage" || ident == "datatypes.JSON" {
 			return TypeJSON
 		}
-		fallthrough
-	// case reflect.Array:
+		return TypeBytes
+	case reflect.Array:
+		return TypeBytes
 	default:
 		return TypeOther
 	}
