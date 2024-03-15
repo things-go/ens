@@ -63,13 +63,14 @@ func structFieldToFielder(fv reflect.StructField) Fielder {
 	// if v, ok := setting["COLUMN"]; ok && v != "" {
 	// 	fieldName = v
 	// }
+
 	ident := fvt.String()
 	return Field(
 		&GoType{
 			Type:         intoGoTypeType(fvt.Kind(), ident),
-			Ident:        fvt.String(),
+			Ident:        ident,
 			PkgPath:      fvt.PkgPath(),
-			PkgQualifier: PkgQualifier(fvt.String()),
+			PkgQualifier: PkgQualifier(ident),
 			Nullable:     nullable,
 		},
 		fieldName,
@@ -127,8 +128,12 @@ func intoGoTypeType(kind reflect.Kind, ident string) Type {
 		default:
 			return TypeOther
 		}
+	case reflect.Slice:
+		if ident == "json.RawMessage" {
+			return TypeJSON
+		}
+		fallthrough
 	// case reflect.Array:
-	// case reflect.Slice:
 	default:
 		return TypeOther
 	}
