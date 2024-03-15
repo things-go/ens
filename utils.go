@@ -52,3 +52,9 @@ func indirect(t reflect.Type) reflect.Type {
 	}
 	return t
 }
+
+func isNill(v reflect.Value) bool {
+	// if vv is not ptr, return false(v is not nil)
+	// if vv is ptr, return v.IsNil()
+	return v.Kind() == reflect.Pointer && v.IsNil()
+}
