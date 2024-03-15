@@ -105,7 +105,7 @@ func intoGoTypeType(t reflect.Type, tag reflect.StructTag) Type {
 		return TypeFloat64
 	case reflect.String:
 		typeValue := schema.ParseTagSetting(tag.Get("gorm"), ";")["TYPE"]
-		if strings.Contains(strings.ToUpper(typeValue), "DECIMAL") {
+		if v := strings.ToUpper(typeValue); strings.Contains(v, "DECIMAL") || strings.Contains(v, "NUMERIC") {
 			return TypeDecimal
 		}
 		return TypeString
