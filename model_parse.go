@@ -1,6 +1,8 @@
 package ens
 
 import (
+	"database/sql"
+	"database/sql/driver"
 	"fmt"
 	"reflect"
 	"strings"
@@ -8,6 +10,9 @@ import (
 	"github.com/things-go/ens/utils"
 	"gorm.io/gorm/schema"
 )
+
+var rowScanner = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
+var rowValuer = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 
 func ParseModel(v any) (MixinEntity, error) {
 	value := reflect.ValueOf(v)
@@ -32,11 +37,14 @@ func structToFielders(vt reflect.Type) []Fielder {
 	fields := make([]Fielder, 0, vt.NumField())
 	for i := 0; i < vt.NumField(); i++ {
 		fv := vt.Field(i)
-		if !fv.IsExported() {
+		if !fv.IsExported() { // ignore unexported field
 			continue
 		}
-		// an embedded field
-		if fv.Anonymous {
+		tag := fv.Tag.Get("gorm")
+		if tag == "-" { // ignore field
+			continue
+		}
+		if fv.Anonymous { // an embedded field
 			fvt := fv.Type
 			for fvt.Kind() == reflect.Ptr {
 				fvt = fv.Type.Elem()
@@ -44,100 +52,98 @@ func structToFielders(vt reflect.Type) []Fielder {
 			if fvt.Kind() != reflect.Struct {
 				continue
 			}
-			fields = append(fields, structToFielders(fvt)...)
+			fields = append(
+				fields,
+				structToFielders(fvt)...,
+			)
 		} else {
-			fields = append(fields, structFieldToFielder(fv))
+			t, skip := intoGoTypeType(fv.Type, tag)
+			if skip {
+				continue
+			}
+			fields = append(
+				fields,
+				Field(newGoType(t, fv.Type), utils.SnakeCase(fv.Name)),
+			)
 		}
 	}
 	return fields
 }
 
-func structFieldToFielder(fv reflect.StructField) Fielder {
-	fvt := fv.Type
-	nullable := false
-	for fvt.Kind() == reflect.Ptr {
-		fvt = fv.Type.Elem()
-		nullable = true
-	}
-
-	fieldName := utils.SnakeCase(fv.Name)
-	ident := fvt.String()
-	return Field(
-		&GoType{
-			Type:         intoGoTypeType(fvt, fv.Tag),
-			Ident:        ident,
-			PkgPath:      fvt.PkgPath(),
-			PkgQualifier: PkgQualifier(ident),
-			Nullable:     nullable,
-		},
-		fieldName,
-	)
-}
-
-func intoGoTypeType(t reflect.Type, tag reflect.StructTag) Type {
-	ident := t.String()
-	switch t.Kind() {
+func intoGoTypeType(origTyp reflect.Type, tag string) (t Type, skip bool) {
+	typ := indirect(origTyp)
+	switch ident := typ.String(); typ.Kind() {
 	case reflect.Bool:
-		return TypeBool
+		t = TypeBool
 	case reflect.Int:
-		return TypeInt
+		t = TypeInt
 	case reflect.Int8:
-		return TypeInt8
+		t = TypeInt8
 	case reflect.Int16:
-		return TypeInt16
+		t = TypeInt16
 	case reflect.Int32:
-		return TypeInt32
+		t = TypeInt32
 	case reflect.Int64:
-		return TypeInt64
+		t = TypeInt64
 	case reflect.Uint:
-		return TypeUint
+		t = TypeUint
 	case reflect.Uint8:
-		return TypeUint8
+		t = TypeUint8
 	case reflect.Uint16:
-		return TypeUint16
+		t = TypeUint16
 	case reflect.Uint32:
-		return TypeUint32
+		t = TypeUint32
 	case reflect.Uint64:
-		return TypeUint64
+		t = TypeUint64
 	case reflect.Float32:
-		return TypeFloat32
+		t = TypeFloat32
 	case reflect.Float64:
-		return TypeFloat64
+		t = TypeFloat64
 	case reflect.String:
-		typeValue := schema.ParseTagSetting(tag.Get("gorm"), ";")["TYPE"]
+		typeValue := schema.ParseTagSetting(tag, ";")["TYPE"]
 		if v := strings.ToUpper(typeValue); strings.Contains(v, "DECIMAL") || strings.Contains(v, "NUMERIC") {
-			return TypeDecimal
+			t = TypeDecimal
+		} else {
+			t = TypeString
 		}
-		return TypeString
 	case reflect.Struct:
 		switch ident {
-		case "time.Time", "sql.NullTime", "datatypes.Date":
-			return TypeTime
+		case "time.Time",
+			"sql.NullTime",
+			"datatypes.Date":
+			t = TypeTime
 		case "sql.NullBool":
-			return TypeBool
+			t = TypeBool
 		case "sql.NullByte":
-			return TypeBytes
+			t = TypeBytes
 		case "sql.NullString":
-			return TypeString
+			t = TypeString
 		case "sql.NullFloat64":
-			return TypeFloat64
+			t = TypeFloat64
 		case "sql.NullInt16":
-			return TypeInt16
+			t = TypeInt16
 		case "sql.NullInt32":
-			return TypeInt32
+			t = TypeInt32
 		case "sql.NullInt64":
-			return TypeInt64
+			t = TypeInt64
 		default:
-			return TypeOther
+			t = TypeOther
+			skip = !(reflect.PointerTo(typ).Implements(rowScanner) && typ.Implements(rowValuer))
 		}
 	case reflect.Slice:
-		if ident == "json.RawMessage" || ident == "datatypes.JSON" {
-			return TypeJSON
+		switch ident {
+		case "json.RawMessage", "datatypes.JSON":
+			t = TypeJSON
+		case "[]uint8", "[]byte":
+			t = TypeBytes
+		default:
+			skip = true
 		}
-		return TypeBytes
 	case reflect.Array:
-		return TypeBytes
+		// TODO: ...
+		t = TypeBytes
 	default:
-		return TypeOther
+		t = TypeOther
 	}
+	return t, skip
 }

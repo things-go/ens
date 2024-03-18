@@ -163,7 +163,7 @@ func (t *GoType) Clone() *GoType {
 }
 
 // String returns the string representation of a type.
-func (t GoType) String() string {
+func (t *GoType) String() string {
 	switch {
 	case t.Ident != "":
 		return t.Ident
@@ -175,37 +175,37 @@ func (t GoType) String() string {
 }
 
 // IsNumeric reports if the given type is a numeric type.
-func (t GoType) IsNumeric() bool {
+func (t *GoType) IsNumeric() bool {
 	return t.Type.IsNumeric()
 }
 
 // IsFloat reports if the given type is a float type.
-func (t GoType) IsFloat() bool {
+func (t *GoType) IsFloat() bool {
 	return t.Type.IsFloat()
 }
 
 // IsInteger reports if the given type is an integral type.
-func (t GoType) IsInteger() bool {
+func (t *GoType) IsInteger() bool {
 	return t.Type.IsInteger()
 }
 
 // IsBool reports if the given type is an bool type.
-func (t GoType) IsBool() bool {
+func (t *GoType) IsBool() bool {
 	return t.Type.IsBool()
 }
 
 // IsTime reports if the given type is an time.Time type.
-func (t GoType) IsTime() bool {
+func (t *GoType) IsTime() bool {
 	return t.Type.IsTime()
 }
 
 // IsValid reports if the given type if known type.
-func (t GoType) IsValid() bool {
+func (t *GoType) IsValid() bool {
 	return t.Type.IsValid()
 }
 
 // Comparable reports whether values of this type are comparable.
-func (t GoType) Comparable() bool {
+func (t *GoType) Comparable() bool {
 	switch t.Type {
 	case TypeBool, TypeTime, TypeUUID, TypeEnum, TypeString:
 		return true
@@ -220,7 +220,10 @@ func (t GoType) Comparable() bool {
 }
 
 func NewGoType(t Type, v any) *GoType {
-	tt := reflect.TypeOf(v)
+	return newGoType(t, reflect.TypeOf(v))
+}
+
+func newGoType(t Type, tt reflect.Type) *GoType {
 	tv := indirect(tt)
 	return &GoType{
 		Type:         t,
