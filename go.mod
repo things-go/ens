@@ -3,12 +3,13 @@ module github.com/things-go/ens
 go 1.22
 
 require (
-	ariga.io/atlas v0.19.2
+	ariga.io/atlas v0.20.0
 	github.com/go-sql-driver/mysql v1.8.0
 	github.com/pingcap/tidb/parser v0.0.0-20230802114738-1e73eee4860c
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
 	golang.org/x/tools v0.19.0
 	gorm.io/datatypes v1.2.0
+	gorm.io/gorm v1.25.4
 	gorm.io/plugin/soft_delete v1.2.1
 )
 
@@ -42,5 +43,4 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gorm.io/driver/mysql v1.5.1 // indirect
 	gorm.io/driver/sqlite v1.5.2 // indirect
-	gorm.io/gorm v1.25.4 // indirect
 )
