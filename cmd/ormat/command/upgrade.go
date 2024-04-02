@@ -38,7 +38,7 @@ func newUpgradeCmd() *upgradeCmd {
 					Command: "ormat",
 					Store: &githubStore{
 						Owner:   "things-go",
-						Repo:    "ormat",
+						Repo:    "ens",
 						Version: version,
 						Client:  NewGithubClient(os.Getenv("GITHUB_TOKEN")),
 					},
