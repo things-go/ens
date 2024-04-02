@@ -17,33 +17,33 @@ gomod:
   proxy: true
 
 builds:
-  # - id: ens
-  #   main: .
-  #   # If true, skip the build. for library projects.
-  #   skip: true
-
-  - id: ormat
+  - id: ens
     main: .
-    binary: ormat
-    dir: cmd/ormat
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    #   - "386"
-    #   - arm
-    # goarm:
-    #   - "7"
-    mod_timestamp: "{{ .CommitTimestamp }}"
-    flags:
-      - -trimpath
-    ldflags:
-      - -s -w
+    # If true, skip the build. for library projects.
+    skip: true
+
+  # - id: ormat
+  #   main: .
+  #   binary: ormat
+  #   dir: cmd/ormat
+  #   env:
+  #     - CGO_ENABLED=0
+  #   goos:
+  #     - linux
+  #     - windows
+  #     - darwin
+  #   goarch:
+  #     - amd64
+  #     - arm64
+  #   #   - "386"
+  #   #   - arm
+  #   # goarm:
+  #   #   - "7"
+  #   mod_timestamp: "{{ .CommitTimestamp }}"
+  #   flags:
+  #     - -trimpath
+  #   ldflags:
+  #     - -s -w
 archives:
   - name_template: >-
       {{ .ProjectName }}_
