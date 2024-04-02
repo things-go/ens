@@ -22,6 +22,7 @@ type CodeGen struct {
 
 type Option func(*CodeGen)
 
+// WithByName the code generator by which executables name.
 func WithByName(s string) Option {
 	return func(g *CodeGen) {
 		g.byName = s

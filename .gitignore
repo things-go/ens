@@ -16,7 +16,10 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+dist
+_test
 
 # Go workspace file
 go.work
-_test
+
+dist/
