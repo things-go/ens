@@ -17,9 +17,10 @@ gomod:
   proxy: true
 
 builds:
-  - main: .
-    # If true, skip the build. for library projects.
-    skip: true
+  # - id: ens
+  #   main: .
+  #   # If true, skip the build. for library projects.
+  #   skip: true
 
   - id: ormat
     main: .
