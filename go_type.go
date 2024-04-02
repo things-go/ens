@@ -157,6 +157,21 @@ type GoType struct {
 	Nullable     bool   // pointers or slices, means not need point.
 }
 
+func NewGoType(t Type, v any) *GoType {
+	return newGoType(t, reflect.TypeOf(v))
+}
+
+func newGoType(t Type, tt reflect.Type) *GoType {
+	tv := indirect(tt)
+	return &GoType{
+		Type:         t,
+		Ident:        tt.String(),
+		PkgPath:      tv.PkgPath(),
+		PkgQualifier: PkgQualifier(tv.String()),
+		Nullable:     utils.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
+	}
+}
+
 func (t *GoType) Clone() *GoType {
 	tt := *t
 	return &tt
@@ -216,20 +231,5 @@ func (t *GoType) Comparable() bool {
 		return true
 	default:
 		return t.Type.IsNumeric()
-	}
-}
-
-func NewGoType(t Type, v any) *GoType {
-	return newGoType(t, reflect.TypeOf(v))
-}
-
-func newGoType(t Type, tt reflect.Type) *GoType {
-	tv := indirect(tt)
-	return &GoType{
-		Type:         t,
-		Ident:        tt.String(),
-		PkgPath:      tv.PkgPath(),
-		PkgQualifier: PkgQualifier(tv.String()),
-		Nullable:     utils.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
 	}
 }
