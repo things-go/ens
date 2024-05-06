@@ -53,17 +53,13 @@ func (self *EntityBuilder) Fields() []Fielder                { return self.field
 func (self *EntityBuilder) Indexes() []Indexer               { return self.indexes }
 func (self *EntityBuilder) ForeignKeys() []ForeignKeyer      { return self.foreignKeys }
 func (self *EntityBuilder) Build(opt *Option) *EntityDescriptor {
-	enableGogo, enableSea := false, false
-	if opt != nil {
-		enableGogo, enableSea = opt.EnableGogo, opt.EnableSea
-	}
 	fielders := self.Fields()
 	fields := make([]*FieldDescriptor, 0, len(fielders))
 	protoMessages := make([]*ProtoMessage, 0, len(fielders))
 	for _, fb := range fielders {
 		field := fb.Build(opt)
 		fields = append(fields, field)
-		protoMessages = append(protoMessages, field.buildProtoMessage(enableGogo, enableSea))
+		protoMessages = append(protoMessages, field.buildProtoMessage())
 	}
 	indexers := self.Indexes()
 	indexes := make([]*IndexDescriptor, 0, len(indexers))

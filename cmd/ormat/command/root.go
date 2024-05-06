@@ -40,7 +40,7 @@ func NewRootCmd() *RootCmd {
 		newSqlCmd().cmd,
 		newBuildCmd().cmd,
 		newGenCmd().cmd,
-		newUpgradeCmd().cmd,
+		newProtoCmd().cmd,
 	)
 	root.cmd = cmd
 	return root

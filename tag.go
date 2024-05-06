@@ -10,7 +10,7 @@ const (
 )
 
 func TagName(kind, name string) string {
-	vv := ""
+	vv := name
 	switch kind {
 	case TagSmallCamelCase:
 		vv = utils.SmallCamelCase(name)

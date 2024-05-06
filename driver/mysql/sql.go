@@ -12,6 +12,7 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/proto"
 	"github.com/xwb1989/sqlparser"
 )
 
@@ -20,7 +21,30 @@ var _ driver.Driver = (*SQL)(nil)
 type SQL struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQL) InspectSchema(_ context.Context, arg *driver.InspectOption) (*ens.MixinSchema, error) {
+func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.MixinSchema, error) {
+	table, err := self.inspectSchema(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return &ens.MixinSchema{
+		Name:     "",
+		Entities: []ens.MixinEntity{IntoMixinEntity(table)},
+	}, nil
+}
+
+// InspectSchema implements driver.Driver.
+func (self *SQL) InspectProto(ctx context.Context, arg *driver.InspectOption) (*proto.Schema, error) {
+	table, err := self.inspectSchema(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return &proto.Schema{
+		Name:     "",
+		Messages: []*proto.Message{IntoProto(table)},
+	}, nil
+}
+
+func (self *SQL) inspectSchema(_ context.Context, arg *driver.InspectOption) (*schema.Table, error) {
 	statement, err := sqlparser.Parse(arg.Data)
 	if err != nil {
 		return nil, err
@@ -33,14 +57,7 @@ func (self *SQL) InspectSchema(_ context.Context, arg *driver.InspectOption) (*e
 		if stmt.TableSpec == nil {
 			return nil, errors.New("未解析到任何字段")
 		}
-		table, err := parseSqlTable(stmt)
-		if err != nil {
-			return nil, err
-		}
-		return &ens.MixinSchema{
-			Name:     "",
-			Entities: []ens.MixinEntity{IntoMixinEntity(table)},
-		}, nil
+		return parseSqlTable(stmt)
 	default:
 		return nil, errors.New("不是DDL语句")
 	}

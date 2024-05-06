@@ -2,10 +2,8 @@ package command
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
@@ -30,15 +28,13 @@ func newBuildCmd() *buildCmd {
 
 	getSchema := func() ens.Schemaer {
 		innerParseFromFile := func(filename string) (ens.Schemaer, error) {
-			var d driver.Driver
-
 			content, err := os.ReadFile(filename)
 			if err != nil {
 				return nil, err
 			}
-			d, ok := driver.LoadDriver(root.Schema)
-			if !ok {
-				return nil, fmt.Errorf("unsupported schema, only support [%v]", strings.Join(driver.DriverNames(), ", "))
+			d, err := driver.LoadDriver(root.Schema)
+			if err != nil {
+				return nil, err
 			}
 			return d.InspectSchema(context.Background(), &driver.InspectOption{
 				URL:            "",

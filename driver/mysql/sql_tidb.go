@@ -8,6 +8,7 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/proto"
 
 	"ariga.io/atlas/sql/mysql"
 	"ariga.io/atlas/sql/schema"
@@ -44,6 +45,32 @@ func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption)
 	return &ens.MixinSchema{
 		Name:     "",
 		Entities: entities,
+	}, nil
+}
+
+// InspectSchema implements driver.Driver.
+func (self *SQLTidb) InspectProto(_ context.Context, arg *driver.InspectOption) (*proto.Schema, error) {
+	pr := parser.New()
+	stmts, _, err := pr.ParseSQL(arg.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	messages := make([]*proto.Message, 0, len(stmts))
+	for _, stmt := range stmts {
+		createStmt, ok := stmt.(*ast.CreateTableStmt)
+		if !ok {
+			continue
+		}
+		table, err := parserCreateTableStmtTable(createStmt)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, IntoProto(table))
+	}
+	return &proto.Schema{
+		Name:     "",
+		Messages: messages,
 	}, nil
 }
 

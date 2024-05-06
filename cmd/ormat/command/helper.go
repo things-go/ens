@@ -1,7 +1,6 @@
 package command
 
 import (
-	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -16,9 +15,9 @@ func LoadDriver(URL string) (driver.Driver, error) {
 	if err != nil {
 		return nil, err
 	}
-	d, ok := driver.LoadDriver(u.Scheme)
-	if !ok {
-		return nil, fmt.Errorf("unsupported schema, only support [%v]", strings.Join(driver.DriverNames(), ", "))
+	d, err := driver.LoadDriver(u.Scheme)
+	if err != nil {
+		return nil, err
 	}
 	return d, nil
 }

@@ -7,6 +7,4 @@ type Option struct {
 	DisableNullToPoint bool              `yaml:"disableNullToPoint" json:"disableNullToPoint"` // 禁用字段为null时输出指针类型,将输出为sql.Nullxx
 	EnableForeignKey   bool              `yaml:"enableForeignKey" json:"enableForeignKey"`     // 输出外键
 	Tags               map[string]string `yaml:"tags" json:"tags"`                             // tags标签列表, support smallCamelCase, camelCase, snakeCase, kebab
-	EnableGogo         bool              `yaml:"enableGogo" json:"enableGogo"`                 // 使能用 gogo  (仅输出 proto 有效)
-	EnableSea          bool              `yaml:"enableSea" json:"enableSea"`                   // 使能用 seaql (仅输出 proto 有效)}
 }

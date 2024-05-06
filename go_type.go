@@ -2,9 +2,10 @@ package ens
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 
-	"github.com/things-go/ens/utils"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var typeNames = [...]string{
@@ -100,6 +101,46 @@ func (t Type) IsValid() bool {
 	return t > TypeInvalid && t < endTypes
 }
 
+func (t Type) IntoProtoKind() (k protoreflect.Kind, n string) {
+	switch t {
+	case TypeBool:
+		k = protoreflect.BoolKind
+		n = k.String()
+
+	case TypeInt8, TypeInt16, TypeInt32, TypeInt:
+		k = protoreflect.Int32Kind
+		n = k.String()
+	case TypeInt64:
+		k = protoreflect.Int64Kind
+		n = k.String()
+	case TypeUint8, TypeUint16, TypeUint32, TypeUint:
+		k = protoreflect.Uint32Kind
+		n = k.String()
+	case TypeUint64:
+		k = protoreflect.Uint64Kind
+		n = k.String()
+	case TypeFloat32:
+		k = protoreflect.FloatKind
+		n = k.String()
+	case TypeFloat64:
+		k = protoreflect.DoubleKind
+		n = k.String()
+	case TypeDecimal, TypeString, TypeEnum, TypeJSON, TypeUUID, TypeOther:
+		k = protoreflect.StringKind
+		n = k.String()
+	case TypeBytes:
+		k = protoreflect.BytesKind
+		n = k.String()
+	case TypeTime:
+		k = protoreflect.MessageKind
+		n = "google.protobuf.Timestamp"
+	default:
+		k = protoreflect.StringKind
+		n = k.String()
+	}
+	return k, n
+}
+
 func (t Type) IntoProtoDataType() string {
 	dataType := ""
 	switch t {
@@ -168,7 +209,7 @@ func newGoType(t Type, tt reflect.Type) *GoType {
 		Ident:        tt.String(),
 		PkgPath:      tv.PkgPath(),
 		PkgQualifier: PkgQualifier(tv.String()),
-		Nullable:     utils.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
+		Nullable:     slices.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
 	}
 }
 

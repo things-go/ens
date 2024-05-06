@@ -28,7 +28,4 @@ func InitFlagSetForConfig(s *pflag.FlagSet, cc *Config) {
 	s.StringVar(&cc.Package, "package", "", "package name")
 	s.StringToStringVar(&cc.Options, "options", nil, "options key value")
 	s.BoolVarP(&cc.DisableDocComment, "disableDocComment", "d", false, "禁用文档注释")
-
-	s.BoolVar(&cc.EnableGogo, "enableGogo", false, "使能用 gogo proto (仅输出 proto 有效)")
-	s.BoolVar(&cc.EnableSea, "enableSea", false, "使能用 seaql (仅输出 proto 有效)")
 }

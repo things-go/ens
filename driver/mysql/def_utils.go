@@ -5,6 +5,8 @@ import (
 	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func autoIncrement(attrs []schema.Attr) bool {
@@ -46,4 +48,36 @@ func IntoMixinEntity(tb *schema.Table) ens.MixinEntity {
 		SetFields(fielders...).
 		SetIndexes(indexers...).
 		SetForeignKeys(fkers...)
+}
+
+func IntoProto(tb *schema.Table) *proto.Message {
+	// * columns
+	fields := make([]*proto.MessageField, 0, len(tb.Columns))
+	for _, col := range tb.Columns {
+		goType := intoGoType(col.Type.Raw)
+		k, n := goType.Type.IntoProtoKind()
+		cardinality := protoreflect.Required
+		if col.Type.Null {
+			cardinality = protoreflect.Optional
+		}
+		annotations := make([]string, 0, 8)
+		if k == protoreflect.Int64Kind || k == protoreflect.Uint64Kind {
+			annotations = append(annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
+		}
+		fields = append(fields, &proto.MessageField{
+			Cardinality: cardinality,
+			Type:        k,
+			TypeName:    n,
+			Name:        col.Name,
+			ColumnName:  col.Name,
+			Comment:     sqlx.MustComment(col.Attrs),
+			Annotations: annotations,
+		})
+	}
+	return &proto.Message{
+		Name:      tb.Name,
+		TableName: tb.Name,
+		Comment:   sqlx.MustComment(tb.Attrs),
+		Fields:    fields,
+	}
 }

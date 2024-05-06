@@ -1,5 +1,3 @@
-//go:generate go run internal/gen.go
-
 package ens
 
 import (
