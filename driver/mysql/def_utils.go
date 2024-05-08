@@ -60,10 +60,6 @@ func IntoProto(tb *schema.Table) *proto.Message {
 		if col.Type.Null {
 			cardinality = protoreflect.Optional
 		}
-		annotations := make([]string, 0, 8)
-		if k == protoreflect.Int64Kind || k == protoreflect.Uint64Kind {
-			annotations = append(annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
-		}
 		fields = append(fields, &proto.MessageField{
 			Cardinality: cardinality,
 			Type:        k,
@@ -71,7 +67,7 @@ func IntoProto(tb *schema.Table) *proto.Message {
 			Name:        col.Name,
 			ColumnName:  col.Name,
 			Comment:     sqlx.MustComment(col.Attrs),
-			Annotations: annotations,
+			Annotations: make([]string, 0, 8),
 		})
 	}
 	return &proto.Message{

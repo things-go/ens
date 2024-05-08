@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/spf13/pflag"
 	"github.com/things-go/ens"
+	"github.com/things-go/ens/utils"
 )
 
 type Config struct {
@@ -16,7 +17,7 @@ type Config struct {
 }
 
 func InitFlagSetForConfig(s *pflag.FlagSet, cc *Config) {
-	s.StringToStringVarP(&cc.Tags, "tags", "K", map[string]string{"json": ens.TagSnakeCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
+	s.StringToStringVarP(&cc.Tags, "tags", "K", map[string]string{"json": utils.StyleSnakeCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
 	s.BoolVarP(&cc.EnableInt, "enableInt", "e", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
 	s.BoolVarP(&cc.EnableIntegerInt, "enableIntegerInt", "E", false, "使能int32,uint32输出为int,uint")
 	s.BoolVarP(&cc.EnableBoolInt, "enableBoolInt", "b", false, "使能bool输出int")

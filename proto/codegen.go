@@ -17,6 +17,7 @@ type CodeGen struct {
 	Version           string            // required, 生成版本
 	PackageName       string            // required, proto 包名
 	Options           map[string]string // required, proto option
+	Style             string            // 字段代码风格, snakeCase, smallCamelCase, camelCase
 	DisableDocComment bool              // 禁用doc注释
 	DisableBool       bool              // 禁用bool,使用int32
 	DisableTimestamp  bool              // 禁用google.protobuf.Timestamp,使用int64
@@ -98,15 +99,16 @@ func (g *CodeGen) Gen() *CodeGen {
 				g.Printf("// %s\n", m.Comment)
 			}
 			typeName := g.toTypeName(m)
+			fieldName := utils.StyleName(g.Style, m.Name)
 			annotation := ""
 			if len(m.Annotations) > 0 {
 				annotation = fmt.Sprintf(" [%s]", strings.Join(m.Annotations, ", "))
 			}
 			seq := i + 1
 			if m.Cardinality == protoreflect.Required {
-				g.Printf("%s %s = %d%s;\n", typeName, m.Name, seq, annotation)
+				g.Printf("%s %s = %d%s;\n", typeName, fieldName, seq, annotation)
 			} else {
-				g.Printf("%s %s %s = %d%s;\n", m.Cardinality.String(), typeName, m.Name, seq, annotation)
+				g.Printf("%s %s %s = %d%s;\n", m.Cardinality.String(), typeName, fieldName, seq, annotation)
 			}
 		}
 		g.Println("}")
@@ -114,19 +116,22 @@ func (g *CodeGen) Gen() *CodeGen {
 	return g
 }
 
-func (g *CodeGen) toTypeName(m *MessageField) string {
+func (g *CodeGen) toTypeName(field *MessageField) string {
 	switch {
-	case g.DisableBool && m.Type == protoreflect.BoolKind:
+	case g.DisableBool && field.Type == protoreflect.BoolKind:
 		return protoreflect.Int32Kind.String()
-	case m.Type == protoreflect.MessageKind && m.TypeName == "google.protobuf.Timestamp":
+	case field.Type == protoreflect.MessageKind && field.TypeName == "google.protobuf.Timestamp":
 		if g.DisableTimestamp {
-			m.Annotations = append(m.Annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
+			field.Annotations = append(field.Annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 			return protoreflect.Int64Kind.String()
 		} else {
-			return m.TypeName
+			return field.TypeName
 		}
+	case field.Type == protoreflect.Int64Kind || field.Type == protoreflect.Uint64Kind:
+		field.Annotations = append(field.Annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
+		fallthrough
 	default:
-		return m.Type.String()
+		return field.Type.String()
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/things-go/ens/matcher"
+	"github.com/things-go/ens/utils"
 	"gorm.io/plugin/soft_delete"
 )
 
@@ -72,7 +73,7 @@ func (field *FieldDescriptor) build(opt *Option) {
 				continue
 			}
 		}
-		vv := TagName(kind, field.Name)
+		vv := utils.StyleName(kind, field.Name)
 		if vv == "" {
 			continue
 		}
