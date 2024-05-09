@@ -19,7 +19,6 @@ const (
 	Float32
 	Float64
 	String
-	Enum
 	Decimal
 	Bytes
 	Time
@@ -27,17 +26,25 @@ const (
 
 	JSON = Field
 	UUID = Field
+	Enum = String
 )
 
 type StructField struct {
-	Type       Type
-	GoName     string
-	Nullable   bool
-	ColumnName string
+	Type       Type   // 类型
+	GoName     string // go名称, camel case
+	Nullable   bool   // 是否Nullable
+	ColumnName string // 列名, snake case
+	Comment    string // 注释
 }
 
 type Struct struct {
-	GoName    string
-	TableName string
-	Fields    []*StructField
+	GoName    string         // go名称, camel case
+	TableName string         // 表名, snake name
+	Comment   string         // 注释
+	Fields    []*StructField // 字段
+}
+
+type Schema struct {
+	Name     string
+	Entities []*Struct
 }

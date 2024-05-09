@@ -5,7 +5,7 @@ import "google.golang.org/protobuf/reflect/protoreflect"
 type MessageField struct {
 	Cardinality protoreflect.Cardinality // optional, required, or repeated
 	Type        protoreflect.Kind        // 类型
-	TypeName    string                   // 类型名称
+	TypeName    string                   // 类型名称, 如果Type=protoreflect.MessageKind时
 	Name        string                   // 名称, snake or small camel case
 	ColumnName  string                   // 列名, snake case
 	Comment     string                   // 注释
@@ -20,5 +20,5 @@ type Message struct {
 
 type Schema struct {
 	Name     string
-	Messages []*Message
+	Entities []*Message
 }

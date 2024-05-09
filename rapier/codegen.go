@@ -5,18 +5,24 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/things-go/ens"
+	"github.com/things-go/ens/utils"
 	"golang.org/x/tools/imports"
 )
 
+var mustEscapeNames = []string{"TableName", "As", "Alias"}
+
 type CodeGen struct {
 	buf               bytes.Buffer
-	Structs           []*Struct // required
-	PackageName       string    // required
-	ModelImportPath   string    // required
-	ByName            string
-	Version           string
-	DisableDocComment bool
+	EscapeName        map[string]struct{} // 转义名称, 需要转换的前面加X, 如果加X后与字段重复, 再追加直接不重复
+	Entities          []*Struct           // required
+	ByName            string              // required, 生成名称
+	Version           string              // required, 生成版本
+	PackageName       string              // required, go包名
+	ModelImportPath   string              // required, model导入路径
+	DisableDocComment bool                // 禁用doc注释
+	EnableInt         bool                // 使能int8,uint8,int16,uint16,int32,uint32输出为int,uint
+	EnableIntegerInt  bool                // 使能int32,uint32输出为int,uint
+	EnableBoolInt     bool                // 使能bool输出int
 }
 
 // Bytes returns the CodeBuf's buffer.
@@ -59,9 +65,9 @@ func (g *CodeGen) Println(a ...any) (n int, err error) {
 	return fmt.Fprintln(&g.buf, a...)
 }
 
-func (g *CodeGen) Get() *CodeGen {
+func (g *CodeGen) Gen() *CodeGen {
 	pkgQualifierPrefix := ""
-	if p := ens.PkgName(g.ModelImportPath); p != "" {
+	if p := utils.PkgName(g.ModelImportPath); p != "" {
 		pkgQualifierPrefix = p + "."
 	}
 	if !g.DisableDocComment {
@@ -83,7 +89,8 @@ func (g *CodeGen) Get() *CodeGen {
 	g.Println(")")
 
 	//* struct
-	for _, et := range g.Structs {
+	for _, et := range g.Entities {
+		g.escapeStructFields(et)
 		structGoName := et.GoName
 		tableName := et.TableName
 
@@ -102,7 +109,11 @@ func (g *CodeGen) Get() *CodeGen {
 			g.Println("refTableName string")
 			g.Println("ALL rapier.Asterisk")
 			for _, field := range et.Fields {
-				g.Printf("%s rapier.%s\n", field.GoName, field.Type.String())
+				comment := ""
+				if field.Comment != "" {
+					comment = "// " + field.Comment
+				}
+				g.Printf("%s rapier.%s %s\n", field.GoName, field.Type.String(), comment)
 			}
 			g.Println("}")
 			g.Println()
@@ -147,10 +158,10 @@ func (g *CodeGen) Get() *CodeGen {
 			g.Println("}")
 			g.Println()
 		}
-		//* method Ref_Alias
+		//* method Alias
 		{
-			g.Printf("// Ref_Alias hold alias name when call %[1]s_Native.As that you defined.\n", structGoName)
-			g.Printf("func (x *%s) Ref_Alias() string {\n", typeNative)
+			g.Printf("// Alias hold alias name when call %[1]s_Native.As that you defined.\n", structGoName)
+			g.Printf("func (x *%s) Alias() string {\n", typeNative)
 			g.Println("return x.refAlias")
 			g.Println("}")
 			g.Println()
@@ -209,6 +220,40 @@ func (g *CodeGen) Get() *CodeGen {
 		}
 	}
 	return g
+}
+
+func (g *CodeGen) escapeStructFields(et *Struct) {
+	escapeNames := make(map[string]struct{})
+	for _, v := range mustEscapeNames {
+		escapeNames[v] = struct{}{}
+	}
+	for k := range g.EscapeName {
+		escapeNames[k] = struct{}{}
+	}
+	existFieldName := make(map[string]struct{}, len(et.Fields))
+	for _, field := range et.Fields {
+		existFieldName[field.GoName] = struct{}{}
+	}
+	// escape
+	for _, field := range et.Fields {
+		goName := field.GoName
+		for {
+			_, ok := escapeNames[goName]
+			if !ok { // need to escape
+				break
+			}
+			goName = "X" + goName
+			// 和存在的重复
+			_, ok = existFieldName[goName]
+			if ok {
+				goName = "X" + goName
+			}
+		}
+		if field.GoName != goName {
+			field.GoName = goName
+			escapeNames[goName] = struct{}{}
+		}
+	}
 }
 
 func genRapier_SelectVariantExprField(field *StructField, hasPrefix bool) string {

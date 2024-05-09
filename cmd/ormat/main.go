@@ -6,8 +6,10 @@ import (
 	"github.com/things-go/ens/cmd/ormat/command"
 )
 
+var root = command.NewRootCmd()
+
 func main() {
-	err := command.NewRootCmd().Execute()
+	err := root.Execute()
 	if err != nil {
 		os.Exit(1)
 	}

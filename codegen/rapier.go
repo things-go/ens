@@ -10,7 +10,7 @@ import (
 
 func (g *CodeGen) GenRapier(modelImportPath string) *CodeGen {
 	pkgQualifierPrefix := ""
-	if p := ens.PkgName(modelImportPath); p != "" {
+	if p := utils.PkgName(modelImportPath); p != "" {
 		pkgQualifierPrefix = p + "."
 	}
 	if !g.disableDocComment {

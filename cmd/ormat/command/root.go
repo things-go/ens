@@ -41,6 +41,7 @@ func NewRootCmd() *RootCmd {
 		newBuildCmd().cmd,
 		newGenCmd().cmd,
 		newProtoCmd().cmd,
+		newRapierCmd().cmd,
 	)
 	root.cmd = cmd
 	return root

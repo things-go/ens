@@ -3,10 +3,13 @@ package mysql
 import (
 	"ariga.io/atlas/sql/mysql"
 	"ariga.io/atlas/sql/schema"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/internal/sqlx"
 	"github.com/things-go/ens/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"github.com/things-go/ens/rapier"
+	"github.com/things-go/ens/utils"
 )
 
 func autoIncrement(attrs []schema.Attr) bool {
@@ -71,6 +74,30 @@ func IntoProto(tb *schema.Table) *proto.Message {
 	}
 	return &proto.Message{
 		Name:      tb.Name,
+		TableName: tb.Name,
+		Comment:   sqlx.MustComment(tb.Attrs),
+		Fields:    fields,
+	}
+}
+
+func IntoRapier(tb *schema.Table) *rapier.Struct {
+	// * columns
+	fields := make([]*rapier.StructField, 0, len(tb.Columns))
+	for _, col := range tb.Columns {
+		goType := intoGoType(col.Type.Raw)
+
+		t := goType.Type.IntoRapierType()
+
+		fields = append(fields, &rapier.StructField{
+			Type:       t,
+			GoName:     utils.CamelCase(col.Name),
+			Nullable:   col.Type.Null,
+			ColumnName: col.Name,
+			Comment:    sqlx.MustComment(col.Attrs),
+		})
+	}
+	return &rapier.Struct{
+		GoName:    utils.CamelCase(tb.Name),
 		TableName: tb.Name,
 		Comment:   sqlx.MustComment(tb.Attrs),
 		Fields:    fields,

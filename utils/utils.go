@@ -25,3 +25,32 @@ func GetPkgName(path string) string {
 	}
 	return pkgName
 }
+
+// PkgQualifier returns the package name from a Go
+// identifier with a package qualifier.
+// eg. time.Time -> time
+func PkgQualifier(ident string) string {
+	i := strings.LastIndexByte(ident, '.')
+	if i == -1 {
+		return ""
+	}
+	s := ident[:i]
+	if i := strings.LastIndexAny(s, "]*"); i != -1 {
+		s = s[i+1:]
+	}
+	return s
+}
+
+// PkgName returns the package name from a Go
+// path with a package qualifier.
+// github.com/things/ens -> ens
+func PkgName(path string) string {
+	if path == "" {
+		return ""
+	}
+	i := strings.LastIndexByte(path, '/')
+	if i == -1 {
+		return path
+	}
+	return path[i+1:]
+}

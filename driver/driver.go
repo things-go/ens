@@ -9,6 +9,7 @@ import (
 	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/proto"
+	"github.com/things-go/ens/rapier"
 )
 
 const (
@@ -22,6 +23,7 @@ var drivers sync.Map
 type Driver interface {
 	InspectSchema(context.Context, *InspectOption) (*ens.MixinSchema, error)
 	InspectProto(context.Context, *InspectOption) (*proto.Schema, error)
+	InspectRapier(ctx context.Context, arg *InspectOption) (*rapier.Schema, error)
 }
 
 func RegisterDriver(name string, d Driver) {

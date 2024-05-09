@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/things-go/ens/rapier"
+	"github.com/things-go/ens/utils"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -106,7 +108,6 @@ func (t Type) IntoProtoKind() (k protoreflect.Kind, n string) {
 	case TypeBool:
 		k = protoreflect.BoolKind
 		n = k.String()
-
 	case TypeInt8, TypeInt16, TypeInt32, TypeInt:
 		k = protoreflect.Int32Kind
 		n = k.String()
@@ -139,6 +140,55 @@ func (t Type) IntoProtoKind() (k protoreflect.Kind, n string) {
 		n = k.String()
 	}
 	return k, n
+}
+
+func (t Type) IntoRapierType() rapier.Type {
+	switch t {
+	case TypeBool:
+		return rapier.Bool
+	case TypeInt8:
+		return rapier.Int8
+	case TypeInt16:
+		return rapier.Int16
+	case TypeInt32:
+		return rapier.Int32
+	case TypeInt64:
+		return rapier.Int64
+	case TypeInt:
+		return rapier.Int
+	case TypeUint8:
+		return rapier.Uint8
+	case TypeUint16:
+		return rapier.Uint16
+	case TypeUint32:
+		return rapier.Uint32
+	case TypeUint64:
+		return rapier.Uint64
+	case TypeUint:
+		return rapier.Uint
+	case TypeFloat32:
+		return rapier.Float32
+	case TypeFloat64:
+		return rapier.Float64
+	case TypeString:
+		return rapier.String
+	case TypeEnum:
+		return rapier.Enum
+	case TypeDecimal:
+		return rapier.Decimal
+	case TypeBytes:
+		return rapier.Bytes
+	case TypeTime:
+		return rapier.Time
+	case TypeJSON:
+		return rapier.JSON
+	case TypeUUID:
+		return rapier.UUID
+	case TypeOther:
+		fallthrough
+	default:
+		return rapier.Field
+	}
 }
 
 func (t Type) IntoProtoDataType() string {
@@ -208,7 +258,7 @@ func newGoType(t Type, tt reflect.Type) *GoType {
 		Type:         t,
 		Ident:        tt.String(),
 		PkgPath:      tv.PkgPath(),
-		PkgQualifier: PkgQualifier(tv.String()),
+		PkgQualifier: utils.PkgQualifier(tv.String()),
 		Nullable:     slices.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
 	}
 }

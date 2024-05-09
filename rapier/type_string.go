@@ -23,16 +23,15 @@ func _() {
 	_ = x[Float32-12]
 	_ = x[Float64-13]
 	_ = x[String-14]
-	_ = x[Enum-15]
-	_ = x[Decimal-16]
-	_ = x[Bytes-17]
-	_ = x[Time-18]
-	_ = x[endType-19]
+	_ = x[Decimal-15]
+	_ = x[Bytes-16]
+	_ = x[Time-17]
+	_ = x[endType-18]
 }
 
-const _Type_name = "FieldBoolInt8Int16Int32Int64IntUint8Uint16Uint32Uint64UintFloat32Float64StringEnumDecimalBytesTimeendType"
+const _Type_name = "FieldBoolInt8Int16Int32Int64IntUint8Uint16Uint32Uint64UintFloat32Float64StringDecimalBytesTimeendType"
 
-var _Type_index = [...]uint8{0, 5, 9, 13, 18, 23, 28, 31, 36, 42, 48, 54, 58, 65, 72, 78, 82, 89, 94, 98, 105}
+var _Type_index = [...]uint8{0, 5, 9, 13, 18, 23, 28, 31, 36, 42, 48, 54, 58, 65, 72, 78, 85, 90, 94, 101}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {

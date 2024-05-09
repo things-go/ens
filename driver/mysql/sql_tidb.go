@@ -9,6 +9,7 @@ import (
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/sqlx"
 	"github.com/things-go/ens/proto"
+	"github.com/things-go/ens/rapier"
 
 	"ariga.io/atlas/sql/mysql"
 	"ariga.io/atlas/sql/schema"
@@ -56,7 +57,7 @@ func (self *SQLTidb) InspectProto(_ context.Context, arg *driver.InspectOption) 
 		return nil, err
 	}
 
-	messages := make([]*proto.Message, 0, len(stmts))
+	entities := make([]*proto.Message, 0, len(stmts))
 	for _, stmt := range stmts {
 		createStmt, ok := stmt.(*ast.CreateTableStmt)
 		if !ok {
@@ -66,11 +67,37 @@ func (self *SQLTidb) InspectProto(_ context.Context, arg *driver.InspectOption) 
 		if err != nil {
 			return nil, err
 		}
-		messages = append(messages, IntoProto(table))
+		entities = append(entities, IntoProto(table))
 	}
 	return &proto.Schema{
 		Name:     "",
-		Messages: messages,
+		Entities: entities,
+	}, nil
+}
+
+// InspectRapier implements driver.Driver.
+func (self *SQLTidb) InspectRapier(ctx context.Context, arg *driver.InspectOption) (*rapier.Schema, error) {
+	pr := parser.New()
+	stmts, _, err := pr.ParseSQL(arg.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	entities := make([]*rapier.Struct, 0, len(stmts))
+	for _, stmt := range stmts {
+		createStmt, ok := stmt.(*ast.CreateTableStmt)
+		if !ok {
+			continue
+		}
+		table, err := parserCreateTableStmtTable(createStmt)
+		if err != nil {
+			return nil, err
+		}
+		entities = append(entities, IntoRapier(table))
+	}
+	return &rapier.Schema{
+		Name:     "",
+		Entities: entities,
 	}, nil
 }
 

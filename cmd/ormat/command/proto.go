@@ -65,7 +65,7 @@ func newProtoCmd() *protoCmd {
 			}
 			schemas := &proto.Schema{
 				Name:     "",
-				Messages: make([]*proto.Message, 0, 128),
+				Entities: make([]*proto.Message, 0, 128),
 			}
 			for _, filename := range root.InputFile {
 				tmpSchema, err := func() (*proto.Schema, error) {
@@ -83,7 +83,7 @@ func newProtoCmd() *protoCmd {
 					slog.Warn("🧐 parse failed !!!", slog.String("file", filename), slog.Any("error", err))
 					continue
 				}
-				schemas.Messages = append(schemas.Messages, tmpSchema.Messages...)
+				schemas.Entities = append(schemas.Entities, tmpSchema.Entities...)
 			}
 			return schemas, nil
 		}
@@ -99,7 +99,7 @@ func newProtoCmd() *protoCmd {
 			if err != nil {
 				return err
 			}
-			for _, msg := range sc.Messages {
+			for _, msg := range sc.Entities {
 				codegen := &proto.CodeGen{
 					Messages:                  []*proto.Message{msg},
 					ByName:                    "ormat",

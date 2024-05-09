@@ -13,6 +13,7 @@ import (
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/sqlx"
 	"github.com/things-go/ens/proto"
+	"github.com/things-go/ens/rapier"
 	"github.com/xwb1989/sqlparser"
 )
 
@@ -32,7 +33,7 @@ func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (
 	}, nil
 }
 
-// InspectSchema implements driver.Driver.
+// InspectProto implements driver.Driver.
 func (self *SQL) InspectProto(ctx context.Context, arg *driver.InspectOption) (*proto.Schema, error) {
 	table, err := self.inspectSchema(ctx, arg)
 	if err != nil {
@@ -40,7 +41,19 @@ func (self *SQL) InspectProto(ctx context.Context, arg *driver.InspectOption) (*
 	}
 	return &proto.Schema{
 		Name:     "",
-		Messages: []*proto.Message{IntoProto(table)},
+		Entities: []*proto.Message{IntoProto(table)},
+	}, nil
+}
+
+// InspectRapier implements driver.Driver.
+func (self *SQL) InspectRapier(ctx context.Context, arg *driver.InspectOption) (*rapier.Schema, error) {
+	table, err := self.inspectSchema(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return &rapier.Schema{
+		Name:     "",
+		Entities: []*rapier.Struct{IntoRapier(table)},
 	}, nil
 }
 
