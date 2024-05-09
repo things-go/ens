@@ -67,7 +67,6 @@ func IntoProto(tb *schema.Table) *proto.Message {
 			Name:        col.Name,
 			ColumnName:  col.Name,
 			Comment:     sqlx.MustComment(col.Attrs),
-			Annotations: make([]string, 0, 8),
 		})
 	}
 	return &proto.Message{

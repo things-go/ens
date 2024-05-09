@@ -9,7 +9,6 @@ type MessageField struct {
 	Name        string                   // 名称, snake or small camel case
 	ColumnName  string                   // 列名, snake case
 	Comment     string                   // 注释
-	Annotations []string                 // 注解
 }
 
 type Message struct {

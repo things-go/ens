@@ -26,12 +26,13 @@ type protoOpt struct {
 	OutputDir string
 
 	// codegen
-	PackageName       string            // required, proto 包名
-	Options           map[string]string // required, proto option
-	Style             string            // 字段代码风格, snakeCase, smallCamelCase, camelCase
-	DisableDocComment bool              // 禁用doc注释
-	DisableBool       bool              // 禁用bool,使用int32
-	DisableTimestamp  bool              // 禁用google.protobuf.Timestamp,使用int64
+	PackageName               string            // required, proto 包名
+	Options                   map[string]string // required, proto option
+	Style                     string            // 字段代码风格, snakeCase, smallCamelCase, camelCase
+	DisableDocComment         bool              // 禁用doc注释
+	DisableBool               bool              // 禁用bool,使用int32
+	DisableTimestamp          bool              // 禁用google.protobuf.Timestamp,使用int64
+	EnableOpenapiv2Annotation bool              // 启用int64的openapiv2注解
 }
 
 type protoCmd struct {
@@ -100,15 +101,16 @@ func newProtoCmd() *protoCmd {
 			}
 			for _, msg := range sc.Messages {
 				codegen := &proto.CodeGen{
-					Messages:          []*proto.Message{msg},
-					ByName:            "ormat",
-					Version:           version,
-					PackageName:       root.PackageName,
-					Options:           root.Options,
-					Style:             root.Style,
-					DisableDocComment: root.DisableDocComment,
-					DisableBool:       root.DisableBool,
-					DisableTimestamp:  root.DisableTimestamp,
+					Messages:                  []*proto.Message{msg},
+					ByName:                    "ormat",
+					Version:                   version,
+					PackageName:               root.PackageName,
+					Options:                   root.Options,
+					Style:                     root.Style,
+					DisableDocComment:         root.DisableDocComment,
+					DisableBool:               root.DisableBool,
+					DisableTimestamp:          root.DisableTimestamp,
+					EnableOpenapiv2Annotation: root.EnableOpenapiv2Annotation,
 				}
 				data := codegen.Gen().Bytes()
 				filename := joinFilename(root.OutputDir, msg.TableName, ".proto")
@@ -138,6 +140,7 @@ func newProtoCmd() *protoCmd {
 	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")
 	cmd.Flags().BoolVar(&root.DisableBool, "disableBool", false, "禁用bool,使用int32")
 	cmd.Flags().BoolVar(&root.DisableTimestamp, "disableTimestamp", false, "禁用google.protobuf.Timestamp,使用int64")
+	cmd.Flags().BoolVar(&root.EnableOpenapiv2Annotation, "enableOpenapiv2Annotation", false, "启用用int64的openapiv2注解")
 
 	cmd.MarkFlagsOneRequired("url", "input")
 

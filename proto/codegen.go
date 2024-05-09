@@ -10,17 +10,20 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
+const googleProtobufTimestamp = "google.protobuf.Timestamp"
+
 type CodeGen struct {
-	buf               bytes.Buffer
-	Messages          []*Message        // required, proto Message
-	ByName            string            // required, 生成名称
-	Version           string            // required, 生成版本
-	PackageName       string            // required, proto 包名
-	Options           map[string]string // required, proto option
-	Style             string            // 字段代码风格, snakeCase, smallCamelCase, camelCase
-	DisableDocComment bool              // 禁用doc注释
-	DisableBool       bool              // 禁用bool,使用int32
-	DisableTimestamp  bool              // 禁用google.protobuf.Timestamp,使用int64
+	buf                       bytes.Buffer
+	Messages                  []*Message        // required, proto Message
+	ByName                    string            // required, 生成名称
+	Version                   string            // required, 生成版本
+	PackageName               string            // required, proto 包名
+	Options                   map[string]string // required, proto option
+	Style                     string            // 字段代码风格, snakeCase, smallCamelCase, camelCase
+	DisableDocComment         bool              // 禁用doc注释
+	DisableBool               bool              // 禁用bool,使用int32
+	DisableTimestamp          bool              // 禁用google.protobuf.Timestamp,使用int64
+	EnableOpenapiv2Annotation bool              // 启用int64的openapiv2注解
 }
 
 // Bytes returns the CodeBuf's buffer.
@@ -98,11 +101,11 @@ func (g *CodeGen) Gen() *CodeGen {
 			if m.Comment != "" {
 				g.Printf("// %s\n", m.Comment)
 			}
-			typeName := g.toTypeName(m)
+			typeName, annotations := g.intoTypeNameAndAnnotation(m)
 			fieldName := utils.StyleName(g.Style, m.Name)
 			annotation := ""
-			if len(m.Annotations) > 0 {
-				annotation = fmt.Sprintf(" [%s]", strings.Join(m.Annotations, ", "))
+			if len(annotations) > 0 {
+				annotation = fmt.Sprintf(" [%s]", strings.Join(annotations, ", "))
 			}
 			seq := i + 1
 			if m.Cardinality == protoreflect.Required {
@@ -116,30 +119,36 @@ func (g *CodeGen) Gen() *CodeGen {
 	return g
 }
 
-func (g *CodeGen) toTypeName(field *MessageField) string {
+func (g *CodeGen) intoTypeNameAndAnnotation(field *MessageField) (string, []string) {
+	annotations := make([]string, 0, 8)
 	switch {
 	case g.DisableBool && field.Type == protoreflect.BoolKind:
-		return protoreflect.Int32Kind.String()
-	case field.Type == protoreflect.MessageKind && field.TypeName == "google.protobuf.Timestamp":
+		return protoreflect.Int32Kind.String(), annotations
+	case field.Type == protoreflect.MessageKind && field.TypeName == googleProtobufTimestamp:
 		if g.DisableTimestamp {
-			field.Annotations = append(field.Annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
-			return protoreflect.Int64Kind.String()
+			if g.EnableOpenapiv2Annotation {
+				annotations = append(annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
+			}
+			return protoreflect.Int64Kind.String(), annotations
 		} else {
-			return field.TypeName
+			return field.TypeName, annotations
 		}
-	case field.Type == protoreflect.Int64Kind || field.Type == protoreflect.Uint64Kind:
-		field.Annotations = append(field.Annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
+	case (field.Type == protoreflect.Int64Kind || field.Type == protoreflect.Uint64Kind) && g.EnableOpenapiv2Annotation:
+		annotations = append(annotations, `(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = { type: [ INTEGER ] }`)
 		fallthrough
 	default:
-		return field.Type.String()
+		return field.Type.String(), annotations
 	}
 }
 
 func (g *CodeGen) needOpenapiv2Annotation(messages []*Message) bool {
+	if !g.EnableOpenapiv2Annotation {
+		return false
+	}
 	for _, msg := range messages {
 		for _, v := range msg.Fields {
 			if v.Type == protoreflect.Int64Kind ||
-				g.DisableTimestamp && v.Type == protoreflect.MessageKind && v.TypeName == "google.protobuf.Timestamp" {
+				g.DisableTimestamp && v.Type == protoreflect.MessageKind && v.TypeName == googleProtobufTimestamp {
 				return true
 			}
 		}
@@ -150,7 +159,7 @@ func (g *CodeGen) needOpenapiv2Annotation(messages []*Message) bool {
 func (g *CodeGen) needGoogleProtobufTimestamp(messages []*Message) bool {
 	for _, msg := range messages {
 		for _, v := range msg.Fields {
-			if !g.DisableTimestamp && v.Type == protoreflect.MessageKind && v.TypeName == "google.protobuf.Timestamp" {
+			if !g.DisableTimestamp && v.Type == protoreflect.MessageKind && v.TypeName == googleProtobufTimestamp {
 				return true
 			}
 		}
