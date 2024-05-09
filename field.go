@@ -14,10 +14,9 @@ type FieldDescriptor struct {
 	Nullable bool   // Nullable reports whether the column may be null.
 	Column   ColumnDef
 	// for go
-	Type           *GoType  // go type information.
-	Optional       bool     // nullable struct field.
-	Tags           []string // Tags struct tag
-	RapierDataType string   // rapier data type
+	Type     *GoType  // go type information.
+	Optional bool     // nullable struct field.
+	Tags     []string // Tags struct tag
 }
 
 func (field *FieldDescriptor) goType(typ any) {
@@ -25,7 +24,6 @@ func (field *FieldDescriptor) goType(typ any) {
 }
 
 func (field *FieldDescriptor) build(opt *Option) {
-	field.RapierDataType = field.Type.Type.IntoRapierDataType()
 	if field.Name == "deleted_at" && field.Type.IsInteger() {
 		field.Optional = false
 		field.goType(soft_delete.DeletedAt(0))
@@ -38,25 +36,12 @@ func (field *FieldDescriptor) build(opt *Option) {
 		switch field.Type.Type {
 		case TypeInt8, TypeInt16, TypeInt32:
 			field.goType(int(0))
-			field.RapierDataType = TypeInt.IntoRapierDataType()
 		case TypeUint8, TypeUint16, TypeUint32:
 			field.goType(uint(0))
-			field.RapierDataType = TypeUint.IntoRapierDataType()
-		}
-	}
-	if opt.EnableIntegerInt {
-		switch field.Type.Type {
-		case TypeInt32:
-			field.goType(int(0))
-			field.RapierDataType = TypeInt.IntoRapierDataType()
-		case TypeUint32:
-			field.goType(uint(0))
-			field.RapierDataType = TypeUint.IntoRapierDataType()
 		}
 	}
 	if opt.EnableBoolInt && field.Type.IsBool() {
 		field.goType(int(0))
-		field.RapierDataType = TypeInt.IntoRapierDataType()
 	}
 	if field.Nullable && opt.DisableNullToPoint {
 		gt, ok := sqlNullValueGoType[field.Type.Type]

@@ -14,9 +14,6 @@ type CodeGen struct {
 	byName            string
 	version           string
 	packageName       string
-	options           map[string]string
-	skipColumns       map[string]struct{}
-	hasColumn         bool
 	disableDocComment bool
 }
 
@@ -41,28 +38,6 @@ func WithPackageName(s string) Option {
 	}
 }
 
-func WithOptions(mp map[string]string) Option {
-	return func(g *CodeGen) {
-		for k, v := range mp {
-			g.options[k] = v
-		}
-	}
-}
-
-func WithSkipColumns(mp map[string]struct{}) Option {
-	return func(g *CodeGen) {
-		if mp != nil {
-			g.skipColumns = mp
-		}
-	}
-}
-
-func WithHasColumn(b bool) Option {
-	return func(g *CodeGen) {
-		g.hasColumn = b
-	}
-}
-
 func WithDisableDocComment(b bool) Option {
 	return func(g *CodeGen) {
 		g.disableDocComment = b
@@ -75,9 +50,6 @@ func New(md []*ens.EntityDescriptor, opts ...Option) *CodeGen {
 		byName:      "codegen",
 		version:     "unknown",
 		packageName: "codegen",
-		options:     make(map[string]string),
-		skipColumns: make(map[string]struct{}),
-		hasColumn:   false,
 	}
 	for _, opt := range opts {
 		opt(g)

@@ -55,11 +55,9 @@ func (self *EntityBuilder) ForeignKeys() []ForeignKeyer      { return self.forei
 func (self *EntityBuilder) Build(opt *Option) *EntityDescriptor {
 	fielders := self.Fields()
 	fields := make([]*FieldDescriptor, 0, len(fielders))
-	protoMessages := make([]*ProtoMessage, 0, len(fielders))
 	for _, fb := range fielders {
 		field := fb.Build(opt)
 		fields = append(fields, field)
-		protoMessages = append(protoMessages, field.buildProtoMessage())
 	}
 	indexers := self.Indexes()
 	indexes := make([]*IndexDescriptor, 0, len(indexers))
@@ -73,12 +71,11 @@ func (self *EntityBuilder) Build(opt *Option) *EntityDescriptor {
 	}
 	name, comment := self.Metadata()
 	return &EntityDescriptor{
-		Name:         name,
-		Comment:      comment,
-		Table:        self.Table(),
-		Fields:       fields,
-		Indexes:      indexes,
-		ForeignKeys:  fks,
-		ProtoMessage: protoMessages,
+		Name:        name,
+		Comment:     comment,
+		Table:       self.Table(),
+		Fields:      fields,
+		Indexes:     indexes,
+		ForeignKeys: fks,
 	}
 }

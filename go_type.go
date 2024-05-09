@@ -3,7 +3,6 @@ package ens
 import (
 	"reflect"
 	"slices"
-	"strings"
 
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/utils"
@@ -188,55 +187,6 @@ func (t Type) IntoRapierType() rapier.Type {
 		fallthrough
 	default:
 		return rapier.Field
-	}
-}
-
-func (t Type) IntoProtoDataType() string {
-	dataType := ""
-	switch t {
-	case TypeBool:
-		dataType = "bool"
-	case TypeInt8, TypeInt16, TypeInt32, TypeInt:
-		dataType = "int32"
-	case TypeInt64:
-		dataType = "int64"
-	case TypeUint8, TypeUint16, TypeUint32, TypeUint:
-		dataType = "uint32"
-	case TypeUint64:
-		dataType = "uint64"
-	case TypeFloat32:
-		dataType = "float"
-	case TypeFloat64:
-		dataType = "double"
-	case TypeDecimal, TypeString, TypeEnum, TypeJSON, TypeUUID, TypeOther:
-		dataType = "string"
-	case TypeBytes:
-		dataType = "bytes"
-	case TypeTime:
-		dataType = "google.protobuf.Timestamp"
-	default:
-		dataType = "string"
-	}
-	return dataType
-}
-
-func (t Type) IntoRapierDataType() string {
-	switch t {
-	case TypeBool,
-		TypeInt8, TypeInt16, TypeInt32, TypeInt64, TypeInt,
-		TypeUint8, TypeUint16, TypeUint32, TypeUint64, TypeUint,
-		TypeFloat32, TypeFloat64, TypeString, TypeEnum:
-		return strings.Title(t.String())
-	case TypeDecimal:
-		return "Decimal"
-	case TypeBytes:
-		return "Bytes"
-	case TypeTime:
-		return "Time"
-	case TypeJSON, TypeUUID, TypeOther:
-		fallthrough
-	default:
-		return "Field"
 	}
 }
 

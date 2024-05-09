@@ -53,19 +53,6 @@ func newGenCmd() *genCmd {
 		},
 	}
 
-	cmdMapper := &cobra.Command{
-		Use:     "mapper",
-		Short:   "model mapper from database",
-		Example: "ormat gen mapper",
-		RunE: func(*cobra.Command, []string) error {
-			sc, err := getSchema()
-			if err != nil {
-				return err
-			}
-			return root.genFileOpt.GenMapper(sc)
-		},
-	}
-
 	cmd.PersistentFlags().StringVar(&root.URL, "url", "", "mysql://root:123456@127.0.0.1:3306/test")
 	cmd.PersistentFlags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
 	cmd.PersistentFlags().StringSliceVar(&root.Exclude, "exclude", nil, "exclude table pattern")
@@ -79,9 +66,6 @@ func newGenCmd() *genCmd {
 
 	cmd.MarkPersistentFlagRequired("url") // nolint
 
-	cmd.AddCommand(
-		cmdMapper,
-	)
 	root.cmd = cmd
 	return root
 }

@@ -2,13 +2,12 @@ package ens
 
 // EntityDescriptor Each table corresponds to an EntityDescriptor
 type EntityDescriptor struct {
-	Name         string                  // entity name
-	Comment      string                  // entity comment
-	Table        TableDef                // entity table define
-	Fields       []*FieldDescriptor      // field information
-	Indexes      []*IndexDescriptor      // index information
-	ForeignKeys  []*ForeignKeyDescriptor // foreign key information
-	ProtoMessage []*ProtoMessage         // protobuf message information.
+	Name        string                  // entity name
+	Comment     string                  // entity comment
+	Table       TableDef                // entity table define
+	Fields      []*FieldDescriptor      // field information
+	Indexes     []*IndexDescriptor      // index information
+	ForeignKeys []*ForeignKeyDescriptor // foreign key information
 }
 
 type EntityDescriptorSlice []*EntityDescriptor

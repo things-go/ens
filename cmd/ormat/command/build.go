@@ -68,16 +68,6 @@ func newBuildCmd() *buildCmd {
 		},
 	}
 
-	cmdMapper := &cobra.Command{
-		Use:     "mapper",
-		Short:   "model mapper from database",
-		Example: "ormat gen mapper",
-		RunE: func(*cobra.Command, []string) error {
-			sc := getSchema()
-			return root.genFileOpt.GenMapper(sc)
-		},
-	}
-
 	cmd.PersistentFlags().StringSliceVarP(&root.InputFile, "input", "i", nil, "input file")
 	cmd.PersistentFlags().StringVarP(&root.Schema, "schema", "s", "file+mysql", "parser driver, [file+mysql,file+tidb]")
 	cmd.PersistentFlags().StringVarP(&root.OutputDir, "out", "o", "./model", "out directory")
@@ -89,9 +79,7 @@ func newBuildCmd() *buildCmd {
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "", "use custom template")
 
 	cmd.MarkPersistentFlagRequired("input") // nolint
-	cmd.AddCommand(
-		cmdMapper,
-	)
+
 	root.cmd = cmd
 	return root
 }

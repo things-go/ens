@@ -51,16 +51,6 @@ func (g *CodeGen) GenModel() *CodeGen {
 		g.Printf("return \"%s\"\n", tableName)
 		g.Println("}")
 		g.Println()
-
-		if g.hasColumn {
-			g.Printf("// Select%s database column name.\n", structName)
-			g.Printf("var Select%s = []string {\n", structName)
-			for _, field := range et.Fields {
-				_, skip := g.skipColumns[field.Name]
-				g.Println(genModelStructVarField(tableName, field, skip))
-			}
-			g.Println("}")
-		}
 	}
 	return g
 }

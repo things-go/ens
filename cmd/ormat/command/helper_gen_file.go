@@ -15,8 +15,6 @@ type genFileOpt struct {
 	Merge         bool
 	MergeFilename string
 	Template      string
-	// assist命令  model 导入路径
-	ModelImportPath string
 }
 
 func (self *genFileOpt) build(mixin ens.Schemaer) *ens.Schema {
@@ -24,18 +22,10 @@ func (self *genFileOpt) build(mixin ens.Schemaer) *ens.Schema {
 }
 
 func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
-	skipColumns := make(map[string]struct{})
-	for _, v := range self.View.SkipColumns {
-		skipColumns[v] = struct{}{}
-	}
-
 	codegenOption := []codegen.Option{
 		codegen.WithByName("ormat"),
 		codegen.WithVersion(version),
 		codegen.WithPackageName(utils.GetPkgName(self.OutputDir)),
-		codegen.WithOptions(self.View.Options),
-		codegen.WithSkipColumns(skipColumns),
-		codegen.WithHasColumn(self.View.HasColumn),
 		codegen.WithDisableDocComment(self.View.DisableDocComment),
 	}
 	sc := self.build(mixin)
@@ -63,36 +53,6 @@ func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
 			}
 			slog.Info("👉 " + filename)
 		}
-	}
-	slog.Info("😄 generate success !!!")
-	return nil
-}
-
-func (self *genFileOpt) GenMapper(mixin ens.Schemaer) error {
-	skipColumns := make(map[string]struct{})
-	for _, v := range self.View.SkipColumns {
-		skipColumns[v] = struct{}{}
-	}
-	codegenOption := []codegen.Option{
-		codegen.WithByName("ormat"),
-		codegen.WithVersion(version),
-		codegen.WithPackageName(utils.GetPkgName(self.OutputDir)),
-		codegen.WithOptions(self.View.Options),
-		codegen.WithSkipColumns(skipColumns),
-		codegen.WithHasColumn(self.View.HasColumn),
-		codegen.WithDisableDocComment(self.View.DisableDocComment),
-	}
-	sc := self.build(mixin)
-	for _, entity := range sc.Entities {
-		data := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).
-			GenMapper().
-			Bytes()
-		filename := joinFilename(self.OutputDir, entity.Name, ".proto")
-		err := WriteFile(filename, data)
-		if err != nil {
-			return fmt.Errorf("%v: %v", entity.Name, err)
-		}
-		slog.Info("👉 " + filename)
 	}
 	slog.Info("😄 generate success !!!")
 	return nil
