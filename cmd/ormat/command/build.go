@@ -68,16 +68,6 @@ func newBuildCmd() *buildCmd {
 		},
 	}
 
-	cmdRapier := &cobra.Command{
-		Use:     "rapier",
-		Short:   "model rapier from sql",
-		Example: "ormat build rapier",
-		RunE: func(*cobra.Command, []string) error {
-			sc := getSchema()
-			return root.genFileOpt.GenRapier(sc)
-		},
-	}
-
 	cmdMapper := &cobra.Command{
 		Use:     "mapper",
 		Short:   "model mapper from database",
@@ -98,11 +88,8 @@ func newBuildCmd() *buildCmd {
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
 	cmd.PersistentFlags().StringVar(&root.Template, "template", "", "use custom template")
 
-	cmdRapier.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
-
 	cmd.MarkPersistentFlagRequired("input") // nolint
 	cmd.AddCommand(
-		cmdRapier,
 		cmdMapper,
 	)
 	root.cmd = cmd

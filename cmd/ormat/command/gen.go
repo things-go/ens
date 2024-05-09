@@ -53,19 +53,6 @@ func newGenCmd() *genCmd {
 		},
 	}
 
-	cmdRapier := &cobra.Command{
-		Use:     "rapier",
-		Short:   "model rapier from database",
-		Example: "ormat gen rapier",
-		RunE: func(*cobra.Command, []string) error {
-			sc, err := getSchema()
-			if err != nil {
-				return err
-			}
-			return root.genFileOpt.GenRapier(sc)
-		},
-	}
-
 	cmdMapper := &cobra.Command{
 		Use:     "mapper",
 		Short:   "model mapper from database",
@@ -92,10 +79,7 @@ func newGenCmd() *genCmd {
 
 	cmd.MarkPersistentFlagRequired("url") // nolint
 
-	cmdRapier.Flags().StringVarP(&root.ModelImportPath, "model_import_path", "M", "", "model import path")
-
 	cmd.AddCommand(
-		cmdRapier,
 		cmdMapper,
 	)
 	root.cmd = cmd
