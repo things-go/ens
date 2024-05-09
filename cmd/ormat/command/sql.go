@@ -27,6 +27,7 @@ type sqlCmd struct {
 	sqlOpt
 }
 
+// atlas schema inspect -u "mysql://localhost" --format "{{ sql . }}"
 func newSqlCmd() *sqlCmd {
 	root := &sqlCmd{}
 	cmd := &cobra.Command{
