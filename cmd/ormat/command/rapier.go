@@ -30,7 +30,6 @@ type rapierOpt struct {
 	ModelImportPath   string // required, model导入路径
 	DisableDocComment bool   // 禁用doc注释
 	EnableInt         bool   // 使能int8,uint8,int16,uint16,int32,uint32输出为int,uint
-	EnableIntegerInt  bool   // 使能int32,uint32输出为int,uint
 	EnableBoolInt     bool   // 使能bool输出int
 }
 
@@ -107,7 +106,6 @@ func newRapierCmd() *rapierCmd {
 					ModelImportPath:   root.ModelImportPath,
 					DisableDocComment: root.DisableDocComment,
 					EnableInt:         root.EnableInt,
-					EnableIntegerInt:  root.EnableIntegerInt,
 					EnableBoolInt:     root.EnableBoolInt,
 				}
 
@@ -138,9 +136,8 @@ func newRapierCmd() *rapierCmd {
 
 	cmd.Flags().StringVar(&root.PackageName, "package", "repository", "proto package name")
 	cmd.Flags().StringVar(&root.ModelImportPath, "modelImportPath", "", "model导入路径")
-	cmd.Flags().BoolVar(&root.DisableDocComment, "enableInt", false, "禁用文档注释")
-	cmd.Flags().BoolVar(&root.EnableInt, "disableBool", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
-	cmd.Flags().BoolVar(&root.EnableIntegerInt, "enableIntegerInt", false, "使能int32,uint32输出为int,uint")
+	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")
+	cmd.Flags().BoolVar(&root.EnableInt, "enableInt", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
 	cmd.Flags().BoolVar(&root.EnableBoolInt, "enableBoolInt", false, "使能bool输出int")
 
 	cmd.MarkFlagsOneRequired("url", "input")

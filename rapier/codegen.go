@@ -21,7 +21,6 @@ type CodeGen struct {
 	ModelImportPath   string              // required, model导入路径
 	DisableDocComment bool                // 禁用doc注释
 	EnableInt         bool                // 使能int8,uint8,int16,uint16,int32,uint32输出为int,uint
-	EnableIntegerInt  bool                // 使能int32,uint32输出为int,uint
 	EnableBoolInt     bool                // 使能bool输出int
 }
 
@@ -113,7 +112,7 @@ func (g *CodeGen) Gen() *CodeGen {
 				if field.Comment != "" {
 					comment = "// " + field.Comment
 				}
-				g.Printf("%s rapier.%s %s\n", field.GoName, field.Type.String(), comment)
+				g.Printf("%s rapier.%s %s\n", field.GoName, g.intoTypeName(field.Type), comment)
 			}
 			g.Println("}")
 			g.Println()
@@ -126,7 +125,7 @@ func (g *CodeGen) Gen() *CodeGen {
 			g.Println("refTableName: tableName,")
 			g.Println("ALL:  rapier.NewAsterisk(alias),")
 			for _, field := range et.Fields {
-				g.Printf("%s: rapier.New%s(alias, \"%s\"),\n", field.GoName, field.Type.String(), field.ColumnName)
+				g.Printf("%s: rapier.New%s(alias, \"%s\"),\n", field.GoName, g.intoTypeName(field.Type), field.ColumnName)
 			}
 			g.Println("}")
 			g.Println("}")
@@ -243,7 +242,7 @@ func (g *CodeGen) escapeStructFields(et *Struct) {
 				break
 			}
 			goName = "X" + goName
-			// 和存在的重复
+			// 和当前字段存在的重复, 再追加一个
 			_, ok = existFieldName[goName]
 			if ok {
 				goName = "X" + goName
@@ -251,9 +250,24 @@ func (g *CodeGen) escapeStructFields(et *Struct) {
 		}
 		if field.GoName != goName {
 			field.GoName = goName
-			escapeNames[goName] = struct{}{}
+			escapeNames[goName] = struct{}{} // 添加为必须转义
 		}
 	}
+}
+
+func (g *CodeGen) intoTypeName(t Type) string {
+	if g.EnableInt {
+		switch t {
+		case Int8, Int16, Int32:
+			return Int.String()
+		case Uint8, Uint16, Uint32:
+			return Uint.String()
+		}
+	}
+	if g.EnableBoolInt && t == Bool {
+		return Int.String()
+	}
+	return t.String()
 }
 
 func genRapier_SelectVariantExprField(field *StructField, hasPrefix bool) string {
