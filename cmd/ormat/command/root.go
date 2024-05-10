@@ -38,7 +38,7 @@ func NewRootCmd() *RootCmd {
 	cmd.PersistentFlags().StringVarP(&root.level, "level", "l", "info", "log level(debug,info,warn,error)")
 	cmd.AddCommand(
 		newSqlCmd().cmd,
-		newGenCmd().cmd,
+		newModelCmd().cmd,
 		newProtoCmd().cmd,
 		newRapierCmd().cmd,
 	)

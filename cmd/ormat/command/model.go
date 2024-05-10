@@ -15,7 +15,7 @@ import (
 	"github.com/things-go/ens/utils"
 )
 
-type genOpt struct {
+type modelOpt struct {
 	// sql file
 	InputFile []string
 	Schema    string
@@ -24,16 +24,25 @@ type genOpt struct {
 	Tables  []string
 	Exclude []string
 
-	genFileOpt
+	OutputDir string
+
+	PackageName string // 包名
+
+	ens.Option
+	DisableCommentTag bool // 禁用注释放入tag标签中
+	DisableDocComment bool // 禁用文档注释
+
+	Merge         bool
+	MergeFilename string
 }
 
-type genCmd struct {
+type modelCmd struct {
 	cmd *cobra.Command
-	genOpt
+	modelOpt
 }
 
-func newGenCmd() *genCmd {
-	root := &genCmd{}
+func newModelCmd() *modelCmd {
+	root := &modelCmd{}
 
 	getSchema := func() (ens.Schemaer, error) {
 		if root.URL != "" {
@@ -88,11 +97,52 @@ func newGenCmd() *genCmd {
 		Short:   "Generate model from database",
 		Example: "ormat model",
 		RunE: func(*cobra.Command, []string) error {
-			sc, err := getSchema()
+			schemaes, err := getSchema()
 			if err != nil {
 				return err
 			}
-			return root.genFileOpt.GenModel(sc)
+			sc := schemaes.Build(&root.Option)
+			if root.Merge {
+				g := ens.CodeGen{
+					Entities:          sc.Entities,
+					ByName:            "ormat",
+					Version:           version,
+					PackageName:       cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
+					DisableDocComment: root.DisableDocComment,
+				}
+				data, err := g.Gen().FormatSource()
+				if err != nil {
+					return err
+				}
+				filename := joinFilename(root.OutputDir, root.MergeFilename, ".go")
+				err = WriteFile(filename, data)
+				if err != nil {
+					return err
+				}
+				slog.Info("👉 " + filename)
+			} else {
+				for _, entity := range sc.Entities {
+					g := &ens.CodeGen{
+						Entities:          []*ens.EntityDescriptor{entity},
+						ByName:            "ormat",
+						Version:           version,
+						PackageName:       utils.GetPkgName(root.OutputDir),
+						DisableDocComment: root.DisableDocComment,
+					}
+					data, err := g.Gen().FormatSource()
+					if err != nil {
+						return fmt.Errorf("%v: %v", entity.Name, err)
+					}
+					filename := joinFilename(root.OutputDir, entity.Name, ".go")
+					err = WriteFile(filename, data)
+					if err != nil {
+						return fmt.Errorf("%v: %v", entity.Name, err)
+					}
+					slog.Info("👉 " + filename)
+				}
+			}
+			slog.Info("😄 generate success !!!")
+			return nil
 		},
 	}
 	// input file
@@ -111,72 +161,14 @@ func newGenCmd() *genCmd {
 	cmd.PersistentFlags().BoolVarP(&root.DisableNullToPoint, "disableNullToPoint", "B", false, "禁用字段为null时输出指针类型,将输出为sql.Nullxx")
 	cmd.PersistentFlags().BoolVarP(&root.DisableCommentTag, "disableCommentTag", "j", false, "禁用注释放入tag标签中")
 	cmd.PersistentFlags().BoolVarP(&root.EnableForeignKey, "enableForeignKey", "J", false, "使用外键")
-	cmd.PersistentFlags().StringVar(&root.Package, "package", "", "package name")
+	cmd.PersistentFlags().StringVar(&root.PackageName, "package", "", "package name")
 	cmd.PersistentFlags().BoolVarP(&root.DisableDocComment, "disableDocComment", "d", false, "禁用文档注释")
 
 	cmd.PersistentFlags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
 	cmd.PersistentFlags().StringVar(&root.MergeFilename, "model", "", "merge filename")
-	cmd.PersistentFlags().StringVar(&root.Template, "template", "", "use template")
 
 	cmd.MarkPersistentFlagRequired("url") // nolint
 
 	root.cmd = cmd
 	return root
-}
-
-type genFileOpt struct {
-	OutputDir     string
-	Merge         bool
-	MergeFilename string
-	Template      string
-
-	ens.Option
-	DisableCommentTag bool   `yaml:"disableCommentTag" json:"disableCommentTag"`     // 禁用注释放入tag标签中
-	Package           string `yaml:"package" json:"package"`                         // 包名
-	DisableDocComment bool   `yaml:"disable_doc_comment" json:"disable_doc_comment"` // 禁用文档注释
-}
-
-func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
-	sc := mixin.Build(&self.Option)
-	if self.Merge {
-		g := ens.CodeGen{
-			Entities:          sc.Entities,
-			ByName:            "ormat",
-			Version:           version,
-			PackageName:       cmp.Or(self.Package, utils.GetPkgName(self.OutputDir)),
-			DisableDocComment: self.DisableDocComment,
-		}
-		data, err := g.Gen().FormatSource()
-		if err != nil {
-			return err
-		}
-		filename := joinFilename(self.OutputDir, self.MergeFilename, ".go")
-		err = WriteFile(filename, data)
-		if err != nil {
-			return err
-		}
-		slog.Info("👉 " + filename)
-	} else {
-		for _, entity := range sc.Entities {
-			g := ens.CodeGen{
-				Entities:          []*ens.EntityDescriptor{entity},
-				ByName:            "ormat",
-				Version:           version,
-				PackageName:       utils.GetPkgName(self.OutputDir),
-				DisableDocComment: self.DisableDocComment,
-			}
-			data, err := g.Gen().FormatSource()
-			if err != nil {
-				return fmt.Errorf("%v: %v", entity.Name, err)
-			}
-			filename := joinFilename(self.OutputDir, entity.Name, ".go")
-			err = WriteFile(filename, data)
-			if err != nil {
-				return fmt.Errorf("%v: %v", entity.Name, err)
-			}
-			slog.Info("👉 " + filename)
-		}
-	}
-	slog.Info("😄 generate success !!!")
-	return nil
 }
