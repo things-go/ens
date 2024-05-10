@@ -1,6 +1,6 @@
 package ens
 
-import "github.com/things-go/ens/internal/sqlx"
+import "github.com/things-go/ens/internal/insql"
 
 var _ MixinEntity = (*EntityBuilder)(nil)
 
@@ -19,7 +19,7 @@ func EntityFromDef(def TableDef) *EntityBuilder {
 	tb := def.Table()
 	return &EntityBuilder{
 		name:    tb.Name,
-		comment: sqlx.MustComment(tb.Attrs),
+		comment: insql.MustComment(tb.Attrs),
 		table:   def,
 		fields:  nil,
 		indexes: nil,

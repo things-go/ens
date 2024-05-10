@@ -1,4 +1,4 @@
-package sqlx
+package insql
 
 import (
 	"fmt"

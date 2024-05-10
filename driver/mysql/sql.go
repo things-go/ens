@@ -11,7 +11,7 @@ import (
 	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
-	innersqlx "github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/internal/insql"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
@@ -296,7 +296,7 @@ func parseSqlColumnDefinition(col *sqlparser.ColumnDefinition) (*schema.Column, 
 		raw := colType.Type
 		if colType.Length != nil {
 			length := parseInt(colType.Length)
-			size = innersqlx.P(int(length))
+			size = insql.P(int(length))
 			raw = fmt.Sprintf("%s(%d)", colType.Type, length)
 		}
 
@@ -322,10 +322,10 @@ func parseSqlColumnDefinition(col *sqlparser.ColumnDefinition) (*schema.Column, 
 		var precision, scale *int
 
 		if colType.Length != nil {
-			precision = innersqlx.P(int(parseInt(colType.Length)))
+			precision = insql.P(int(parseInt(colType.Length)))
 		}
 		if colType.Scale != nil {
-			scale = innersqlx.P(int(parseInt(colType.Scale)))
+			scale = insql.P(int(parseInt(colType.Scale)))
 		}
 		coldef.Type = &schema.ColumnType{
 			Type: &schema.TimeType{
@@ -401,7 +401,7 @@ func parseSqlIndexDefinition(table *schema.Table, idx *sqlparser.IndexDefinition
 	cols := make([]*schema.Column, 0, len(idx.Columns))
 	for _, idxCol := range idx.Columns {
 		columnName := idxCol.Column.String()
-		col, ok := innersqlx.FindColumn(columns, columnName)
+		col, ok := insql.FindColumn(columns, columnName)
 		if ok {
 			cols = append(cols, col)
 		} else {

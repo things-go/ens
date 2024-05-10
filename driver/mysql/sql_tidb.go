@@ -7,7 +7,7 @@ import (
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
-	innersqlx "github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/internal/insql"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
@@ -399,7 +399,7 @@ func parseCreateTableStmtIndex(table *schema.Table, idx *ast.Constraint, columns
 	cols := make([]*schema.Column, 0, len(idx.Keys))
 	for _, idxCol := range idx.Keys {
 		columnName := idxCol.Column.String()
-		col, ok := innersqlx.FindColumn(columns, columnName)
+		col, ok := insql.FindColumn(columns, columnName)
 		if ok {
 			cols = append(cols, col)
 		} else {

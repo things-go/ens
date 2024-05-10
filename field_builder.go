@@ -3,7 +3,7 @@ package ens
 import (
 	"database/sql/driver"
 
-	"github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/internal/insql"
 )
 
 func Bool(name string) *FieldBuilder                    { return Field(BoolType(), name) }
@@ -50,7 +50,7 @@ func FieldFromDef(t *GoType, def ColumnDef) *FieldBuilder {
 	return &FieldBuilder{
 		inner: &FieldDescriptor{
 			Name:     col.Name,
-			Comment:  sqlx.MustComment(col.Attrs),
+			Comment:  insql.MustComment(col.Attrs),
 			Nullable: col.Type.Null,
 			Column:   def,
 			Type:     t,

@@ -8,7 +8,7 @@ import (
 	"ariga.io/atlas/sql/schema"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	innersqlx "github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/internal/insql"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
@@ -28,7 +28,7 @@ func intoColumnSql(col *schema.Column) string {
 	if autoIncrement {
 		b.WriteString(" AUTO_INCREMENT")
 	} else {
-		dv, ok := innersqlx.DefaultValue(col)
+		dv, ok := insql.DefaultValue(col)
 		if ok {
 			fmt.Fprintf(b, " DEFAULT '%s'", strings.Trim(dv, `"`))
 		} else if nullable {
@@ -39,10 +39,10 @@ func intoColumnSql(col *schema.Column) string {
 }
 
 func intoIndexSql(index *schema.Index) string {
-	fields := innersqlx.IndexPartColumnNames(index.Parts)
+	fields := insql.IndexPartColumnNames(index.Parts)
 	indexType := findIndexType(index.Attrs)
 	fieldList := "`" + strings.Join(fields, "`,`") + "`"
-	if innersqlx.IndexEqual(index.Table.PrimaryKey, index) {
+	if insql.IndexEqual(index.Table.PrimaryKey, index) {
 		return fmt.Sprintf("PRIMARY KEY (%s) USING %s", fieldList, indexType)
 	} else if index.Unique {
 		return fmt.Sprintf("UNIQUE KEY `%s` (%s) USING %s", index.Name, fieldList, indexType)
@@ -52,8 +52,8 @@ func intoIndexSql(index *schema.Index) string {
 }
 
 func intoForeignKeySql(fk *schema.ForeignKey) string {
-	columnNameList := "`" + strings.Join(innersqlx.ColumnNames(fk.Columns), "`,`") + "`"
-	refColumnNameList := "`" + strings.Join(innersqlx.ColumnNames(fk.RefColumns), "`,`") + "`"
+	columnNameList := "`" + strings.Join(insql.ColumnNames(fk.Columns), "`,`") + "`"
+	refColumnNameList := "`" + strings.Join(insql.ColumnNames(fk.RefColumns), "`,`") + "`"
 	return fmt.Sprintf(
 		"CONSTRAINT `%s` FOREIGN KEY (%s) REFERENCES `%s` (%s) ON DELETE %s ON UPDATE %s",
 		fk.Symbol, columnNameList, fk.RefTable.Name, refColumnNameList, fk.OnDelete, fk.OnUpdate,
@@ -79,7 +79,7 @@ func intoTableSql(tb *schema.Table) string {
 	for _, col := range tb.Columns {
 		remain--
 		suffix := suffixOrEmpty(remain)
-		comment, ok := innersqlx.Comment(col.Attrs)
+		comment, ok := insql.Comment(col.Attrs)
 		if ok {
 			comment = fmt.Sprintf(" COMMENT '%s'", comment)
 		}
@@ -93,7 +93,7 @@ func intoTableSql(tb *schema.Table) string {
 	}
 	for _, index := range tb.Indexes {
 		remain--
-		if innersqlx.IndexEqual(tb.PrimaryKey, index) { // ignore primary key, maybe include
+		if insql.IndexEqual(tb.PrimaryKey, index) { // ignore primary key, maybe include
 			continue
 		}
 		suffix := suffixOrEmpty(remain)
@@ -137,7 +137,7 @@ func intoTableSql(tb *schema.Table) string {
 func intoGormTag(tb *schema.Table, col *schema.Column) string {
 	pkPriority, isPk := 0, false
 	if pk := tb.PrimaryKey; pk != nil {
-		pkPriority, isPk = innersqlx.FindIndexPartSeq(pk.Parts, col)
+		pkPriority, isPk = insql.FindIndexPartSeq(pk.Parts, col)
 	}
 	autoIncrement := autoIncrement(col.Attrs)
 
@@ -156,7 +156,7 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 			fmt.Fprintf(b, ";autoIncrement:true")
 		}
 	} else {
-		dv, ok := innersqlx.DefaultValue(col)
+		dv, ok := insql.DefaultValue(col)
 		if ok {
 			if dv == `""` || dv == "" {
 				dv = "''"
@@ -177,7 +177,7 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 		}
 	}
 	for _, val := range col.Indexes {
-		if innersqlx.IndexEqual(tb.PrimaryKey, val) { // ignore primary key, may be include
+		if insql.IndexEqual(tb.PrimaryKey, val) { // ignore primary key, may be include
 			continue
 		}
 		if val.Unique {
@@ -190,13 +190,13 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 			// }
 		}
 		if len(val.Parts) > 1 {
-			priority, ok := innersqlx.FindIndexPartSeq(val.Parts, col)
+			priority, ok := insql.FindIndexPartSeq(val.Parts, col)
 			if ok {
 				fmt.Fprintf(b, ",priority:%d", priority)
 			}
 		}
 	}
-	if comment, ok := innersqlx.Comment(col.Attrs); ok && comment != "" {
+	if comment, ok := insql.Comment(col.Attrs); ok && comment != "" {
 		fmt.Fprintf(b, ";comment:%s", utils.TrimFieldComment(comment))
 	}
 	b.WriteString(`"`)
@@ -219,13 +219,13 @@ func intoProto(tb *schema.Table) *proto.Message {
 			TypeName:    n,
 			Name:        col.Name,
 			ColumnName:  col.Name,
-			Comment:     innersqlx.MustComment(col.Attrs),
+			Comment:     insql.MustComment(col.Attrs),
 		})
 	}
 	return &proto.Message{
 		Name:      tb.Name,
 		TableName: tb.Name,
-		Comment:   innersqlx.MustComment(tb.Attrs),
+		Comment:   insql.MustComment(tb.Attrs),
 		Fields:    fields,
 	}
 }
@@ -243,13 +243,13 @@ func intoRapier(tb *schema.Table) *rapier.Struct {
 			GoName:     utils.CamelCase(col.Name),
 			Nullable:   col.Type.Null,
 			ColumnName: col.Name,
-			Comment:    innersqlx.MustComment(col.Attrs),
+			Comment:    insql.MustComment(col.Attrs),
 		})
 	}
 	return &rapier.Struct{
 		GoName:    utils.CamelCase(tb.Name),
 		TableName: tb.Name,
-		Comment:   innersqlx.MustComment(tb.Attrs),
+		Comment:   insql.MustComment(tb.Attrs),
 		Fields:    fields,
 	}
 }
@@ -258,6 +258,6 @@ func intoSql(tb *schema.Table) *sqlx.Table {
 	return &sqlx.Table{
 		Name:    tb.Name,
 		Sql:     intoTableSql(tb),
-		Comment: innersqlx.MustComment(tb.Attrs),
+		Comment: insql.MustComment(tb.Attrs),
 	}
 }

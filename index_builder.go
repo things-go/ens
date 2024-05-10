@@ -1,6 +1,6 @@
 package ens
 
-import "github.com/things-go/ens/internal/sqlx"
+import "github.com/things-go/ens/internal/insql"
 
 type indexBuilder struct {
 	inner *IndexDescriptor
@@ -23,7 +23,7 @@ func IndexFromDef(e IndexDef) *indexBuilder {
 	return &indexBuilder{
 		inner: &IndexDescriptor{
 			Name:   index.Name,
-			Fields: sqlx.IndexPartColumnNames(index.Parts),
+			Fields: insql.IndexPartColumnNames(index.Parts),
 			Index:  e,
 		},
 	}

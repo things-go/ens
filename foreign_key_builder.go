@@ -2,7 +2,7 @@ package ens
 
 import (
 	"ariga.io/atlas/sql/schema"
-	"github.com/things-go/ens/internal/sqlx"
+	"github.com/things-go/ens/internal/insql"
 )
 
 // ForeignKeyFromDef returns a new ForeignKey with the ForeignKeyDef.
@@ -28,9 +28,9 @@ func ForeignKeyFromDef(def ForeignKeyDef) *foreignKeyBuilder {
 		inner: &ForeignKeyDescriptor{
 			Symbol:     fk.Symbol,
 			Table:      fk.Table.Name,
-			Columns:    sqlx.ColumnNames(fk.Columns),
+			Columns:    insql.ColumnNames(fk.Columns),
 			RefTable:   fk.RefTable.Name,
-			RefColumns: sqlx.ColumnNames(fk.RefColumns),
+			RefColumns: insql.ColumnNames(fk.RefColumns),
 			OnUpdate:   fk.OnUpdate,
 			OnDelete:   fk.OnDelete,
 			ForeignKey: def,
