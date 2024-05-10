@@ -68,7 +68,7 @@ func newSqlCmd() *sqlCmd {
 			} else {
 				for _, entity := range schemaes.Entities {
 					codegen := &sqlx.CodeGen{
-						Entities:          schemaes.Entities,
+						Entities:          []*sqlx.Table{entity},
 						ByName:            "ormat",
 						Version:           version,
 						DisableDocComment: root.DisableDocComment,
