@@ -1,6 +1,7 @@
 package command
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/proto"
+	"github.com/things-go/ens/utils"
 )
 
 type protoOpt struct {
@@ -104,7 +106,7 @@ func newProtoCmd() *protoCmd {
 					Messages:                  []*proto.Message{msg},
 					ByName:                    "ormat",
 					Version:                   version,
-					PackageName:               root.PackageName,
+					PackageName:               cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
 					Options:                   root.Options,
 					Style:                     root.Style,
 					DisableDocComment:         root.DisableDocComment,
@@ -134,7 +136,7 @@ func newProtoCmd() *protoCmd {
 
 	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./mapper", "out directory")
 
-	cmd.Flags().StringVar(&root.PackageName, "package", "mapper", "proto package name")
+	cmd.Flags().StringVar(&root.PackageName, "package", "", "proto package name")
 	cmd.Flags().StringToStringVar(&root.Options, "options", nil, "proto options key/value")
 	cmd.Flags().StringVar(&root.Style, "style", "", "字段代码风格, [snakeCase,smallCamelCase,camelCase]")
 	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")

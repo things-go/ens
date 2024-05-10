@@ -1,6 +1,7 @@
 package command
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/rapier"
+	"github.com/things-go/ens/utils"
 )
 
 type rapierOpt struct {
@@ -102,7 +104,7 @@ func newRapierCmd() *rapierCmd {
 					Entities:          []*rapier.Struct{msg},
 					ByName:            "ormat",
 					Version:           version,
-					PackageName:       root.PackageName,
+					PackageName:       cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
 					ModelImportPath:   root.ModelImportPath,
 					DisableDocComment: root.DisableDocComment,
 					EnableInt:         root.EnableInt,
@@ -134,7 +136,7 @@ func newRapierCmd() *rapierCmd {
 
 	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./repository", "out directory")
 
-	cmd.Flags().StringVar(&root.PackageName, "package", "repository", "proto package name")
+	cmd.Flags().StringVar(&root.PackageName, "package", "", "proto package name")
 	cmd.Flags().StringVar(&root.ModelImportPath, "modelImportPath", "", "model导入路径")
 	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")
 	cmd.Flags().BoolVar(&root.EnableInt, "enableInt", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")

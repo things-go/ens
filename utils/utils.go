@@ -16,6 +16,9 @@ func TrimFieldComment(s string) string {
 	return s
 }
 
+// PkgName returns the package name from a filepath
+// with a package qualifier.
+// ./model -> model
 func GetPkgName(path string) string {
 	pkgName := filepath.Base(path)
 	if pkgName == "" || pkgName == "." {
