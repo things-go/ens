@@ -128,6 +128,7 @@ func newModelCmd() *modelCmd {
 						Version:           version,
 						PackageName:       utils.GetPkgName(root.OutputDir),
 						DisableDocComment: root.DisableDocComment,
+						Option:            root.Option,
 					}
 					data, err := g.Gen().FormatSource()
 					if err != nil {
