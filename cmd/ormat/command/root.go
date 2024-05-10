@@ -21,7 +21,7 @@ func NewRootCmd() *RootCmd {
 		Use:           "ormat",
 		Short:         "gorm reflect tools",
 		Long:          "database/sql to golang struct",
-		Version:       BuildVersion(),
+		Version:       buildVersion(),
 		SilenceUsage:  false,
 		SilenceErrors: false,
 		Args:          cobra.NoArgs,
@@ -38,7 +38,6 @@ func NewRootCmd() *RootCmd {
 	cmd.PersistentFlags().StringVarP(&root.level, "level", "l", "info", "log level(debug,info,warn,error)")
 	cmd.AddCommand(
 		newSqlCmd().cmd,
-		newBuildCmd().cmd,
 		newGenCmd().cmd,
 		newProtoCmd().cmd,
 		newRapierCmd().cmd,
