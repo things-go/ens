@@ -44,7 +44,7 @@ type modelCmd struct {
 func newModelCmd() *modelCmd {
 	root := &modelCmd{}
 
-	getSchema := func() (ens.Schemaer, error) {
+	getSchema := func() (*ens.Schema, error) {
 		if root.URL != "" {
 			d, err := LoadDriver(root.URL)
 			if err != nil {
@@ -64,12 +64,12 @@ func newModelCmd() *modelCmd {
 			if err != nil {
 				return nil, err
 			}
-			mixin := &ens.MixinSchema{
+			mixin := &ens.Schema{
 				Name:     "",
-				Entities: make([]ens.MixinEntity, 0, 128),
+				Entities: make([]*ens.EntityDescriptor, 0, 128),
 			}
 			for _, filename := range root.InputFile {
-				sc, err := func() (ens.Schemaer, error) {
+				sc, err := func() (*ens.Schema, error) {
 					content, err := os.ReadFile(filename)
 					if err != nil {
 						return nil, err
@@ -84,7 +84,7 @@ func newModelCmd() *modelCmd {
 					slog.Warn("🧐 parse failed !!!", slog.String("file", filename), slog.Any("error", err))
 					continue
 				}
-				mixin.Entities = append(mixin.Entities, sc.(*ens.MixinSchema).Entities...)
+				mixin.Entities = append(mixin.Entities, sc.Entities...)
 			}
 			return mixin, nil
 		}
@@ -101,14 +101,14 @@ func newModelCmd() *modelCmd {
 			if err != nil {
 				return err
 			}
-			sc := schemaes.Build(&root.Option)
 			if root.Merge {
 				g := ens.CodeGen{
-					Entities:          sc.Entities,
+					Entities:          schemaes.Entities,
 					ByName:            "ormat",
 					Version:           version,
 					PackageName:       cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
 					DisableDocComment: root.DisableDocComment,
+					Option:            root.Option,
 				}
 				data, err := g.Gen().FormatSource()
 				if err != nil {
@@ -121,7 +121,7 @@ func newModelCmd() *modelCmd {
 				}
 				slog.Info("👉 " + filename)
 			} else {
-				for _, entity := range sc.Entities {
+				for _, entity := range schemaes.Entities {
 					g := &ens.CodeGen{
 						Entities:          []*ens.EntityDescriptor{entity},
 						ByName:            "ormat",

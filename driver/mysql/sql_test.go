@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 )
 
@@ -57,5 +56,5 @@ func Test_SQL_Parse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(value.Entities[0].(*ens.EntityBuilder))
+	fmt.Println(value.Entities[0])
 }

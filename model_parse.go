@@ -14,7 +14,7 @@ import (
 var rowScanner = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
 var rowValuer = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 
-func ParseModel(v any) (MixinEntity, error) {
+func ParseModel(v any) (*EntityDescriptor, error) {
 	value := reflect.ValueOf(v)
 	if value.Kind() == reflect.Pointer && value.IsNil() {
 		return nil, nil
@@ -26,15 +26,18 @@ func ParseModel(v any) (MixinEntity, error) {
 	if vt.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("%s is not a struct", vt.String())
 	}
-	entityBuilder := &EntityBuilder{}
-	fields := structToFielders(vt)
-	return entityBuilder.
-		SetMetadata(utils.SnakeCase(vt.Name()), "").
-		SetFields(fields...), nil
+	return &EntityDescriptor{
+		Name:        utils.SnakeCase(vt.Name()),
+		Comment:     "",
+		Table:       nil,
+		Fields:      structToFielders(vt),
+		Indexes:     nil,
+		ForeignKeys: nil,
+	}, nil
 }
 
-func structToFielders(vt reflect.Type) []Fielder {
-	fields := make([]Fielder, 0, vt.NumField())
+func structToFielders(vt reflect.Type) []*FieldDescriptor {
+	fields := make([]*FieldDescriptor, 0, vt.NumField())
 	for i := 0; i < vt.NumField(); i++ {
 		fv := vt.Field(i)
 		if !fv.IsExported() { // ignore unexported field
@@ -63,7 +66,15 @@ func structToFielders(vt reflect.Type) []Fielder {
 			}
 			fields = append(
 				fields,
-				Field(newGoType(t, fv.Type), utils.SnakeCase(fv.Name)),
+				&FieldDescriptor{
+					Name:     utils.SnakeCase(fv.Name),
+					Comment:  "",
+					Nullable: false,
+					Column:   nil,
+					Type:     newGoType(t, fv.Type),
+					Optional: false,
+					Tags:     []string{},
+				},
 			)
 		}
 	}

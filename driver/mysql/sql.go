@@ -23,14 +23,14 @@ var _ driver.Driver = (*SQL)(nil)
 type SQL struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.MixinSchema, error) {
+func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
 	table, err := self.inspectSchema(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
-	return &ens.MixinSchema{
+	return &ens.Schema{
 		Name:     "",
-		Entities: []ens.MixinEntity{IntoMixinEntity(table)},
+		Entities: []*ens.EntityDescriptor{intoSchema(table)},
 	}, nil
 }
 

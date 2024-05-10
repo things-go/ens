@@ -23,29 +23,3 @@ type ForeignKeyDef interface {
 	ForeignKey() *schema.ForeignKey
 	Definition() string
 }
-
-type Indexer interface {
-	Build() *IndexDescriptor
-}
-
-type Fielder interface {
-	Build(*Option) *FieldDescriptor
-}
-
-type ForeignKeyer interface {
-	Build() *ForeignKeyDescriptor
-}
-
-type MixinEntity interface {
-	Metadata() (string, string)
-	Table() TableDef
-	Fields() []Fielder
-	Indexes() []Indexer
-	ForeignKeys() []ForeignKeyer
-
-	Build(*Option) *EntityDescriptor
-}
-
-type Schemaer interface {
-	Build(opt *Option) *Schema
-}

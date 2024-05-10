@@ -16,6 +16,7 @@ type CodeGen struct {
 	Version           string
 	PackageName       string
 	DisableDocComment bool
+	Option
 }
 
 // Bytes returns the CodeBuf's buffer.
@@ -106,6 +107,7 @@ func (g *CodeGen) Gen() *CodeGen {
 }
 
 func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
+	field.build(&g.Option)
 	b := strings.Builder{}
 	b.Grow(256)
 	ident := field.Type.Ident

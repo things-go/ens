@@ -20,16 +20,16 @@ var _ driver.Driver = (*MySQL)(nil)
 
 type MySQL struct{}
 
-func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.MixinSchema, error) {
+func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
 	schemaes, err := self.inspectSchema(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
-	entities := make([]ens.MixinEntity, 0, len(schemaes.Tables))
+	entities := make([]*ens.EntityDescriptor, 0, len(schemaes.Tables))
 	for _, tb := range schemaes.Tables {
-		entities = append(entities, IntoMixinEntity(tb))
+		entities = append(entities, intoSchema(tb))
 	}
-	return &ens.MixinSchema{
+	return &ens.Schema{
 		Name:     schemaes.Name,
 		Entities: entities,
 	}, nil

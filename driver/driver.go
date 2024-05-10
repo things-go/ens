@@ -22,7 +22,7 @@ const (
 var drivers sync.Map
 
 type Driver interface {
-	InspectSchema(context.Context, *InspectOption) (*ens.MixinSchema, error)
+	InspectSchema(context.Context, *InspectOption) (*ens.Schema, error)
 	InspectProto(context.Context, *InspectOption) (*proto.Schema, error)
 	InspectRapier(ctx context.Context, arg *InspectOption) (*rapier.Schema, error)
 	InspectSql(ctx context.Context, arg *InspectOption) (*sqlx.Schema, error)

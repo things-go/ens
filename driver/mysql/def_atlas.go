@@ -8,6 +8,7 @@ import (
 	"ariga.io/atlas/sql/schema"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/things-go/ens"
 	"github.com/things-go/ens/internal/insql"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
@@ -259,5 +260,54 @@ func intoSql(tb *schema.Table) *sqlx.Table {
 		Name:    tb.Name,
 		Sql:     intoTableSql(tb),
 		Comment: insql.MustComment(tb.Attrs),
+	}
+}
+
+func intoSchema(tb *schema.Table) *ens.EntityDescriptor {
+	// * columns
+	fielders := make([]*ens.FieldDescriptor, 0, len(tb.Columns))
+	for _, col := range tb.Columns {
+		fielders = append(fielders, &ens.FieldDescriptor{
+			Name:     col.Name,
+			Comment:  insql.MustComment(col.Attrs),
+			Nullable: col.Type.Null,
+			Column:   NewColumnDef(col),
+			Type:     intoGoType(col.Type.Raw),
+			Optional: col.Type.Null,
+			Tags:     []string{intoGormTag(tb, col)},
+		})
+	}
+	// * indexes
+	indexers := make([]*ens.IndexDescriptor, 0, len(tb.Indexes))
+	for _, index := range tb.Indexes {
+		indexers = append(indexers, &ens.IndexDescriptor{
+			Name:   index.Name,
+			Fields: insql.IndexPartColumnNames(index.Parts),
+			Index:  NewIndexDef(index),
+		})
+	}
+	//* foreignKeys
+	fks := make([]*ens.ForeignKeyDescriptor, 0, len(tb.ForeignKeys))
+	for _, fk := range tb.ForeignKeys {
+		fks = append(fks, &ens.ForeignKeyDescriptor{
+			Symbol:     fk.Symbol,
+			Table:      fk.Table.Name,
+			Columns:    insql.ColumnNames(fk.Columns),
+			RefTable:   fk.RefTable.Name,
+			RefColumns: insql.ColumnNames(fk.RefColumns),
+			OnUpdate:   fk.OnUpdate,
+			OnDelete:   fk.OnDelete,
+			ForeignKey: NewForeignKey(fk),
+		})
+	}
+
+	// * table
+	return &ens.EntityDescriptor{
+		Name:        tb.Name,
+		Comment:     insql.MustComment(tb.Attrs),
+		Table:       NewTableDef(tb),
+		Fields:      fielders,
+		Indexes:     indexers,
+		ForeignKeys: fks,
 	}
 }

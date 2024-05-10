@@ -25,14 +25,14 @@ import (
 type SQLTidb struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption) (*ens.MixinSchema, error) {
+func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
 	pr := parser.New()
 	stmts, _, err := pr.ParseSQL(arg.Data)
 	if err != nil {
 		return nil, err
 	}
 
-	entities := make([]ens.MixinEntity, 0, len(stmts))
+	entities := make([]*ens.EntityDescriptor, 0, len(stmts))
 	for _, stmt := range stmts {
 		createStmt, ok := stmt.(*ast.CreateTableStmt)
 		if !ok {
@@ -42,9 +42,9 @@ func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption)
 		if err != nil {
 			return nil, err
 		}
-		entities = append(entities, IntoMixinEntity(table))
+		entities = append(entities, intoSchema(table))
 	}
-	return &ens.MixinSchema{
+	return &ens.Schema{
 		Name:     "",
 		Entities: entities,
 	}, nil
