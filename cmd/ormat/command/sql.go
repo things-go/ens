@@ -6,20 +6,19 @@ import (
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
-	"github.com/things-go/ens"
-	"github.com/things-go/ens/codegen"
 	"github.com/things-go/ens/driver"
-	"github.com/things-go/ens/utils"
+	"github.com/things-go/ens/sqlx"
 )
 
 type sqlOpt struct {
-	OutputDir         string
-	Merge             bool
-	Filename          string
 	URL               string
 	Tables            []string
 	Exclude           []string
 	DisableDocComment bool
+
+	OutputDir string
+	Merge     bool
+	Filename  string
 }
 
 type sqlCmd struct {
@@ -27,7 +26,7 @@ type sqlCmd struct {
 	sqlOpt
 }
 
-// atlas schema inspect -u "mysql://localhost" --format "{{ sql . }}"
+// must be same as atlas schema inspect -u "mysql://localhost" --format "{{ sql . }}"
 func newSqlCmd() *sqlCmd {
 	root := &sqlCmd{}
 	cmd := &cobra.Command{
@@ -39,7 +38,7 @@ func newSqlCmd() *sqlCmd {
 			if err != nil {
 				return err
 			}
-			mixin, err := d.InspectSchema(context.Background(), &driver.InspectOption{
+			schemaes, err := d.InspectSql(context.Background(), &driver.InspectOption{
 				URL:  root.URL,
 				Data: "",
 				InspectOptions: schema.InspectOptions{
@@ -51,17 +50,15 @@ func newSqlCmd() *sqlCmd {
 			if err != nil {
 				return err
 			}
-			sc := mixin.Build(nil)
-			codegenOption := []codegen.Option{
-				codegen.WithByName("ormat"),
-				codegen.WithVersion(version),
-				codegen.WithPackageName(utils.GetPkgName(root.OutputDir)),
-				codegen.WithDisableDocComment(root.DisableDocComment),
-			}
+
 			if root.Merge {
-				data := codegen.New(sc.Entities, codegenOption...).
-					GenDDL().
-					Bytes()
+				codegen := &sqlx.CodeGen{
+					Entities:          schemaes.Entities,
+					ByName:            "ormat",
+					Version:           version,
+					DisableDocComment: root.DisableDocComment,
+				}
+				data := codegen.Gen().Bytes()
 				filename := joinFilename(root.OutputDir, root.Filename, ".sql")
 				err = WriteFile(filename, data)
 				if err != nil {
@@ -69,10 +66,14 @@ func newSqlCmd() *sqlCmd {
 				}
 				slog.Info("👉 " + filename)
 			} else {
-				for _, entity := range sc.Entities {
-					data := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).
-						GenDDL().
-						Bytes()
+				for _, entity := range schemaes.Entities {
+					codegen := &sqlx.CodeGen{
+						Entities:          schemaes.Entities,
+						ByName:            "ormat",
+						Version:           version,
+						DisableDocComment: root.DisableDocComment,
+					}
+					data := codegen.Gen().Bytes()
 					filename := joinFilename(root.OutputDir, entity.Name, ".sql")
 					err = WriteFile(filename, data)
 					if err != nil {
@@ -87,8 +88,8 @@ func newSqlCmd() *sqlCmd {
 	cmd.Flags().StringVar(&root.URL, "url", "", "mysql://root:123456@127.0.0.1:3306/test)")
 	cmd.PersistentFlags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
 	cmd.PersistentFlags().StringSliceVar(&root.Exclude, "exclude", nil, "exclude table pattern")
-	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./model/migration", "out directory")
-	cmd.Flags().StringVar(&root.Filename, "filename", "migration", "filename when merge enabled")
+	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./migration", "out directory")
+	cmd.Flags().StringVar(&root.Filename, "filename", "create_table", "filename when merge enabled")
 	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file")
 	cmd.Flags().BoolVarP(&root.DisableDocComment, "disableDocComment", "d", false, "禁用文档注释")
 

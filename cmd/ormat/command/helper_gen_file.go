@@ -22,15 +22,16 @@ func (self *genFileOpt) build(mixin ens.Schemaer) *ens.Schema {
 }
 
 func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
-	codegenOption := []codegen.Option{
-		codegen.WithByName("ormat"),
-		codegen.WithVersion(version),
-		codegen.WithPackageName(utils.GetPkgName(self.OutputDir)),
-		codegen.WithDisableDocComment(self.View.DisableDocComment),
-	}
 	sc := self.build(mixin)
 	if self.Merge {
-		data, err := codegen.New(sc.Entities, codegenOption...).GenModel().FormatSource()
+		g := codegen.CodeGen{
+			Entities:          sc.Entities,
+			ByName:            "ormat",
+			Version:           version,
+			PackageName:       utils.GetPkgName(self.OutputDir),
+			DisableDocComment: self.View.DisableDocComment,
+		}
+		data, err := g.Gen().FormatSource()
 		if err != nil {
 			return err
 		}
@@ -42,7 +43,14 @@ func (self *genFileOpt) GenModel(mixin ens.Schemaer) error {
 		slog.Info("👉 " + filename)
 	} else {
 		for _, entity := range sc.Entities {
-			data, err := codegen.New([]*ens.EntityDescriptor{entity}, codegenOption...).GenModel().FormatSource()
+			g := codegen.CodeGen{
+				Entities:          []*ens.EntityDescriptor{entity},
+				ByName:            "ormat",
+				Version:           version,
+				PackageName:       utils.GetPkgName(self.OutputDir),
+				DisableDocComment: self.View.DisableDocComment,
+			}
+			data, err := g.Gen().FormatSource()
 			if err != nil {
 				return fmt.Errorf("%v: %v", entity.Name, err)
 			}

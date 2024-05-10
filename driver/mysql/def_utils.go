@@ -3,13 +3,9 @@ package mysql
 import (
 	"ariga.io/atlas/sql/mysql"
 	"ariga.io/atlas/sql/schema"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/internal/sqlx"
-	"github.com/things-go/ens/proto"
-	"github.com/things-go/ens/rapier"
-	"github.com/things-go/ens/utils"
 )
 
 func autoIncrement(attrs []schema.Attr) bool {
@@ -51,55 +47,4 @@ func IntoMixinEntity(tb *schema.Table) ens.MixinEntity {
 		SetFields(fielders...).
 		SetIndexes(indexers...).
 		SetForeignKeys(fkers...)
-}
-
-func IntoProto(tb *schema.Table) *proto.Message {
-	// * columns
-	fields := make([]*proto.MessageField, 0, len(tb.Columns))
-	for _, col := range tb.Columns {
-		goType := intoGoType(col.Type.Raw)
-		k, n := goType.Type.IntoProtoKind()
-		cardinality := protoreflect.Required
-		if col.Type.Null {
-			cardinality = protoreflect.Optional
-		}
-		fields = append(fields, &proto.MessageField{
-			Cardinality: cardinality,
-			Type:        k,
-			TypeName:    n,
-			Name:        col.Name,
-			ColumnName:  col.Name,
-			Comment:     sqlx.MustComment(col.Attrs),
-		})
-	}
-	return &proto.Message{
-		Name:      tb.Name,
-		TableName: tb.Name,
-		Comment:   sqlx.MustComment(tb.Attrs),
-		Fields:    fields,
-	}
-}
-
-func IntoRapier(tb *schema.Table) *rapier.Struct {
-	// * columns
-	fields := make([]*rapier.StructField, 0, len(tb.Columns))
-	for _, col := range tb.Columns {
-		goType := intoGoType(col.Type.Raw)
-
-		t := goType.Type.IntoRapierType()
-
-		fields = append(fields, &rapier.StructField{
-			Type:       t,
-			GoName:     utils.CamelCase(col.Name),
-			Nullable:   col.Type.Null,
-			ColumnName: col.Name,
-			Comment:    sqlx.MustComment(col.Attrs),
-		})
-	}
-	return &rapier.Struct{
-		GoName:    utils.CamelCase(tb.Name),
-		TableName: tb.Name,
-		Comment:   sqlx.MustComment(tb.Attrs),
-		Fields:    fields,
-	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
+	"github.com/things-go/ens/sqlx"
 )
 
 const (
@@ -24,6 +25,7 @@ type Driver interface {
 	InspectSchema(context.Context, *InspectOption) (*ens.MixinSchema, error)
 	InspectProto(context.Context, *InspectOption) (*proto.Schema, error)
 	InspectRapier(ctx context.Context, arg *InspectOption) (*rapier.Schema, error)
+	InspectSql(ctx context.Context, arg *InspectOption) (*sqlx.Schema, error)
 }
 
 func RegisterDriver(name string, d Driver) {

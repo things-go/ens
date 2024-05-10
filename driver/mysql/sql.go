@@ -11,9 +11,10 @@ import (
 	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
-	"github.com/things-go/ens/internal/sqlx"
+	innersqlx "github.com/things-go/ens/internal/sqlx"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
+	"github.com/things-go/ens/sqlx"
 	"github.com/xwb1989/sqlparser"
 )
 
@@ -41,7 +42,7 @@ func (self *SQL) InspectProto(ctx context.Context, arg *driver.InspectOption) (*
 	}
 	return &proto.Schema{
 		Name:     "",
-		Entities: []*proto.Message{IntoProto(table)},
+		Entities: []*proto.Message{intoProto(table)},
 	}, nil
 }
 
@@ -53,7 +54,19 @@ func (self *SQL) InspectRapier(ctx context.Context, arg *driver.InspectOption) (
 	}
 	return &rapier.Schema{
 		Name:     "",
-		Entities: []*rapier.Struct{IntoRapier(table)},
+		Entities: []*rapier.Struct{intoRapier(table)},
+	}, nil
+}
+
+// InspectSql implements driver.Driver.
+func (self *SQL) InspectSql(ctx context.Context, arg *driver.InspectOption) (*sqlx.Schema, error) {
+	table, err := self.inspectSchema(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	return &sqlx.Schema{
+		Name:     "",
+		Entities: []*sqlx.Table{intoSql(table)},
 	}, nil
 }
 
@@ -283,7 +296,7 @@ func parseSqlColumnDefinition(col *sqlparser.ColumnDefinition) (*schema.Column, 
 		raw := colType.Type
 		if colType.Length != nil {
 			length := parseInt(colType.Length)
-			size = sqlx.P(int(length))
+			size = innersqlx.P(int(length))
 			raw = fmt.Sprintf("%s(%d)", colType.Type, length)
 		}
 
@@ -309,10 +322,10 @@ func parseSqlColumnDefinition(col *sqlparser.ColumnDefinition) (*schema.Column, 
 		var precision, scale *int
 
 		if colType.Length != nil {
-			precision = sqlx.P(int(parseInt(colType.Length)))
+			precision = innersqlx.P(int(parseInt(colType.Length)))
 		}
 		if colType.Scale != nil {
-			scale = sqlx.P(int(parseInt(colType.Scale)))
+			scale = innersqlx.P(int(parseInt(colType.Scale)))
 		}
 		coldef.Type = &schema.ColumnType{
 			Type: &schema.TimeType{
@@ -388,7 +401,7 @@ func parseSqlIndexDefinition(table *schema.Table, idx *sqlparser.IndexDefinition
 	cols := make([]*schema.Column, 0, len(idx.Columns))
 	for _, idxCol := range idx.Columns {
 		columnName := idxCol.Column.String()
-		col, ok := sqlx.FindColumn(columns, columnName)
+		col, ok := innersqlx.FindColumn(columns, columnName)
 		if ok {
 			cols = append(cols, col)
 		} else {
