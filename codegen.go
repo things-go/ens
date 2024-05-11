@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/things-go/ens/matcher"
 	"github.com/things-go/ens/utils"
 	"golang.org/x/tools/imports"
+	"gorm.io/plugin/soft_delete"
 )
+
+var mustEscapeNames = []string{"TableName"}
 
 type CodeGen struct {
 	buf               bytes.Buffer
@@ -89,10 +93,10 @@ func (g *CodeGen) Gen() *CodeGen {
 	for _, et := range g.Entities {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
-
+		newEt := TransferEntityField(et, &g.Option)
 		g.Printf("// %s %s\n", structName, strings.ReplaceAll(strings.TrimSpace(et.Comment), "\n", "\n// "))
 		g.Printf("type %s struct {\n", structName)
-		for _, field := range et.Fields {
+		for _, field := range newEt.Fields {
 			g.Println(g.genModelStructField(field))
 		}
 		g.Println("}")
@@ -107,7 +111,6 @@ func (g *CodeGen) Gen() *CodeGen {
 }
 
 func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
-	field.build(&g.Option)
 	b := strings.Builder{}
 	b.Grow(256)
 	ident := field.Type.Ident
@@ -115,7 +118,7 @@ func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
 		ident = "*" + field.Type.Ident
 	}
 	// field
-	b.WriteString(utils.CamelCase(field.Name))
+	b.WriteString(field.GoName)
 	b.WriteString(" ")
 	b.WriteString(ident)
 	if len(field.Tags) > 0 {
@@ -128,4 +131,94 @@ func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
 		b.WriteString(field.Comment)
 	}
 	return b.String()
+}
+
+func TransferEntityField(et *EntityDescriptor, opt *Option) *EntityDescriptor {
+	newEt := *et
+	newEt.Fields = make([]*FieldDescriptor, 0, len(et.Fields))
+
+	if opt == nil {
+		opt = defaultOption()
+	}
+	escapeNames := make(map[string]struct{})
+	for _, v := range mustEscapeNames {
+		escapeNames[v] = struct{}{}
+	}
+	for _, k := range opt.EscapeName {
+		escapeNames[k] = struct{}{}
+	}
+	existFieldName := make(map[string]struct{}, len(et.Fields))
+	for _, field := range et.Fields {
+		existFieldName[field.GoName] = struct{}{}
+	}
+	for _, field := range et.Fields {
+		newField := TransferField(field, opt)
+		goName := newField.GoName
+		for {
+			_, ok := escapeNames[goName]
+			if !ok { // need to escape
+				break
+			}
+			goName = "X" + goName
+			// 和当前字段存在的重复, 再追加一个
+			_, ok = existFieldName[goName]
+			if ok {
+				goName = "X" + goName
+			}
+		}
+		if newField.GoName != goName {
+			newField.GoName = goName
+			escapeNames[goName] = struct{}{} // 添加为必须转义
+		}
+		newEt.Fields = append(newEt.Fields, newField)
+	}
+	return &newEt
+}
+
+// 根规则转义一些数据
+func TransferField(f *FieldDescriptor, opt *Option) *FieldDescriptor {
+	field := *f
+	if field.ColumnName == "deleted_at" && field.Type.IsInteger() {
+		field.Optional = false
+		field.GoType(soft_delete.DeletedAt(0))
+	}
+	if opt == nil {
+		opt = defaultOption()
+	}
+	if opt.EnableInt {
+		switch field.Type.Type {
+		case TypeInt8, TypeInt16, TypeInt32:
+			field.GoType(int(0))
+		case TypeUint8, TypeUint16, TypeUint32:
+			field.GoType(uint(0))
+		}
+	}
+	if opt.EnableBoolInt && field.Type.IsBool() {
+		field.GoType(int(0))
+	}
+	if field.Nullable && opt.DisableNullToPoint {
+		gt, ok := sqlNullValueGoType[field.Type.Type]
+		if ok {
+			field.Type = gt.Clone()
+			field.Optional = false
+		}
+	}
+	for tag, kind := range opt.Tags {
+		if tag == "json" {
+			if vv := matcher.JsonTag(field.Comment); vv != "" {
+				field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s"`, tag, vv))
+				continue
+			}
+		}
+		vv := utils.StyleName(kind, field.ColumnName)
+		if vv == "" {
+			continue
+		}
+		if tag == "json" && matcher.HasAffixJSONTag(field.Comment) {
+			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty,string"`, tag, vv))
+		} else {
+			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty"`, tag, vv))
+		}
+	}
+	return &field
 }

@@ -159,7 +159,7 @@ func newModelCmd() *modelCmd {
 	cmd.PersistentFlags().StringVar(&root.PackageName, "package", "", "package name")
 	cmd.PersistentFlags().BoolVarP(&root.DisableDocComment, "disableDocComment", "d", false, "禁用文档注释")
 
-	cmd.PersistentFlags().StringToStringVarP(&root.Tags, "tags", "K", map[string]string{"json": utils.StyleSnakeCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
+	cmd.PersistentFlags().StringToStringVarP(&root.Tags, "tags", "K", map[string]string{"json": utils.StyleSmallCamelCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
 	cmd.PersistentFlags().BoolVarP(&root.EnableInt, "enableInt", "e", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
 	cmd.PersistentFlags().BoolVarP(&root.EnableBoolInt, "enableBoolInt", "b", false, "使能bool输出int")
 	cmd.PersistentFlags().BoolVarP(&root.DisableNullToPoint, "disableNullToPoint", "B", false, "禁用字段为null时输出指针类型,将输出为sql.Nullxx")

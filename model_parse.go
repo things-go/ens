@@ -67,13 +67,14 @@ func structToFielders(vt reflect.Type) []*FieldDescriptor {
 			fields = append(
 				fields,
 				&FieldDescriptor{
-					Name:     utils.SnakeCase(fv.Name),
-					Comment:  "",
-					Nullable: false,
-					Column:   nil,
-					Type:     newGoType(t, fv.Type),
-					Optional: false,
-					Tags:     []string{},
+					ColumnName: utils.SnakeCase(fv.Name),
+					Comment:    "",
+					Nullable:   false,
+					Column:     nil,
+					Type:       newGoType(t, fv.Type),
+					GoName:     fv.Name,
+					Optional:   false,
+					Tags:       []string{},
 				},
 			)
 		}

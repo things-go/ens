@@ -268,13 +268,14 @@ func intoSchema(tb *schema.Table) *ens.EntityDescriptor {
 	fielders := make([]*ens.FieldDescriptor, 0, len(tb.Columns))
 	for _, col := range tb.Columns {
 		fielders = append(fielders, &ens.FieldDescriptor{
-			Name:     col.Name,
-			Comment:  insql.MustComment(col.Attrs),
-			Nullable: col.Type.Null,
-			Column:   NewColumnDef(col),
-			Type:     intoGoType(col.Type.Raw),
-			Optional: col.Type.Null,
-			Tags:     []string{intoGormTag(tb, col)},
+			ColumnName: col.Name,
+			Comment:    insql.MustComment(col.Attrs),
+			Nullable:   col.Type.Null,
+			Column:     NewColumnDef(col),
+			Type:       intoGoType(col.Type.Raw),
+			GoName:     utils.CamelCase(col.Name),
+			Optional:   col.Type.Null,
+			Tags:       []string{intoGormTag(tb, col)},
 		})
 	}
 	// * indexes
