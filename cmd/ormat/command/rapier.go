@@ -10,6 +10,7 @@ import (
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
+	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/utils"
@@ -43,13 +44,13 @@ type rapierCmd struct {
 func newRapierCmd() *rapierCmd {
 	root := &rapierCmd{}
 
-	rapierSchema := func() (*rapier.Schema, error) {
+	rapierSchema := func() (*ens.Schema, error) {
 		if root.Url != "" {
 			d, err := LoadDriver(root.Url)
 			if err != nil {
 				return nil, err
 			}
-			return d.InspectRapier(context.Background(), &driver.InspectOption{
+			return d.InspectSchema(context.Background(), &driver.InspectOption{
 				URL: root.Url,
 				InspectOptions: schema.InspectOptions{
 					Mode:    schema.InspectTables,
@@ -63,17 +64,17 @@ func newRapierCmd() *rapierCmd {
 			if err != nil {
 				return nil, err
 			}
-			schemas := &rapier.Schema{
+			schemas := &ens.Schema{
 				Name:     "",
-				Entities: make([]*rapier.Struct, 0, 128),
+				Entities: make([]*ens.EntityDescriptor, 0, 128),
 			}
 			for _, filename := range root.InputFile {
-				tmpSchema, err := func() (*rapier.Schema, error) {
+				tmpSchema, err := func() (*ens.Schema, error) {
 					content, err := os.ReadFile(filename)
 					if err != nil {
 						return nil, err
 					}
-					return d.InspectRapier(context.Background(), &driver.InspectOption{
+					return d.InspectSchema(context.Background(), &driver.InspectOption{
 						URL:            "",
 						Data:           string(content),
 						InspectOptions: schema.InspectOptions{},
@@ -99,9 +100,10 @@ func newRapierCmd() *rapierCmd {
 			if err != nil {
 				return err
 			}
-			for _, msg := range sc.Entities {
+			rapierSchemaes := sc.IntoRapier()
+			for _, entity := range rapierSchemaes.Entities {
 				codegen := &rapier.CodeGen{
-					Entities:          []*rapier.Struct{msg},
+					Entities:          []*rapier.Struct{entity},
 					ByName:            "ormat",
 					Version:           version,
 					PackageName:       cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
@@ -110,15 +112,14 @@ func newRapierCmd() *rapierCmd {
 					EnableInt:         root.EnableInt,
 					EnableBoolInt:     root.EnableBoolInt,
 				}
-
 				data, err := codegen.Gen().FormatSource()
 				if err != nil {
 					return err
 				}
-				filename := joinFilename(root.OutputDir, msg.TableName, ".rapier.gen.go")
+				filename := joinFilename(root.OutputDir, entity.TableName, ".rapier.gen.go")
 				err = WriteFile(filename, data)
 				if err != nil {
-					return fmt.Errorf("%v: %w", msg.TableName, err)
+					return fmt.Errorf("%v: %w", entity.TableName, err)
 				}
 				slog.Info("👉 " + filename)
 			}

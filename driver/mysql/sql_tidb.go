@@ -8,7 +8,6 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 
 	"ariga.io/atlas/sql/mysql"
@@ -70,32 +69,6 @@ func (self *SQLTidb) InspectSql(ctx context.Context, arg *driver.InspectOption) 
 		entities = append(entities, intoSql(table))
 	}
 	return &sqlx.Schema{
-		Name:     "",
-		Entities: entities,
-	}, nil
-}
-
-// InspectRapier implements driver.Driver.
-func (self *SQLTidb) InspectRapier(ctx context.Context, arg *driver.InspectOption) (*rapier.Schema, error) {
-	pr := parser.New()
-	stmts, _, err := pr.ParseSQL(arg.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	entities := make([]*rapier.Struct, 0, len(stmts))
-	for _, stmt := range stmts {
-		createStmt, ok := stmt.(*ast.CreateTableStmt)
-		if !ok {
-			continue
-		}
-		table, err := parserCreateTableStmtTable(createStmt)
-		if err != nil {
-			return nil, err
-		}
-		entities = append(entities, intoRapier(table))
-	}
-	return &rapier.Schema{
 		Name:     "",
 		Entities: entities,
 	}, nil

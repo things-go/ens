@@ -2,6 +2,8 @@ package ens
 
 import (
 	"github.com/things-go/ens/proto"
+	"github.com/things-go/ens/rapier"
+	"github.com/things-go/ens/utils"
 )
 
 // EntityDescriptor Each table corresponds to an EntityDescriptor
@@ -21,6 +23,18 @@ func (s *EntityDescriptor) IntoProto() *proto.Message {
 	}
 	return &proto.Message{
 		Name:      s.Name,
+		TableName: s.Name,
+		Comment:   s.Comment,
+		Fields:    fields,
+	}
+}
+func (s *EntityDescriptor) IntoRapier() *rapier.Struct {
+	fields := make([]*rapier.StructField, 0, len(s.Fields))
+	for _, field := range s.Fields {
+		fields = append(fields, field.IntoRapier())
+	}
+	return &rapier.Struct{
+		GoName:    utils.CamelCase(s.Name),
 		TableName: s.Name,
 		Comment:   s.Comment,
 		Fields:    fields,

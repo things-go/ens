@@ -12,7 +12,6 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 	"github.com/xwb1989/sqlparser"
 )
@@ -30,18 +29,6 @@ func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (
 	return &ens.Schema{
 		Name:     "",
 		Entities: []*ens.EntityDescriptor{intoSchema(table)},
-	}, nil
-}
-
-// InspectRapier implements driver.Driver.
-func (self *SQL) InspectRapier(ctx context.Context, arg *driver.InspectOption) (*rapier.Schema, error) {
-	table, err := self.inspectSchema(ctx, arg)
-	if err != nil {
-		return nil, err
-	}
-	return &rapier.Schema{
-		Name:     "",
-		Entities: []*rapier.Struct{intoRapier(table)},
 	}, nil
 }
 

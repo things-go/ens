@@ -9,7 +9,6 @@ import (
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 	"github.com/things-go/ens/utils"
 )
@@ -200,30 +199,6 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 	}
 	b.WriteString(`"`)
 	return b.String()
-}
-
-func intoRapier(tb *schema.Table) *rapier.Struct {
-	// * columns
-	fields := make([]*rapier.StructField, 0, len(tb.Columns))
-	for _, col := range tb.Columns {
-		goType := intoGoType(col.Type.Raw)
-
-		t := goType.Type.IntoRapierType()
-
-		fields = append(fields, &rapier.StructField{
-			Type:       t,
-			GoName:     utils.CamelCase(col.Name),
-			Nullable:   col.Type.Null,
-			ColumnName: col.Name,
-			Comment:    insql.MustComment(col.Attrs),
-		})
-	}
-	return &rapier.Struct{
-		GoName:    utils.CamelCase(tb.Name),
-		TableName: tb.Name,
-		Comment:   insql.MustComment(tb.Attrs),
-		Fields:    fields,
-	}
 }
 
 func intoSql(tb *schema.Table) *sqlx.Table {

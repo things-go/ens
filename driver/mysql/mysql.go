@@ -8,7 +8,6 @@ import (
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
-	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 
 	_ "ariga.io/atlas/sql/mysql"
@@ -29,22 +28,6 @@ func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption)
 		entities = append(entities, intoSchema(tb))
 	}
 	return &ens.Schema{
-		Name:     schemaes.Name,
-		Entities: entities,
-	}, nil
-}
-
-// InspectRapier implements driver.Driver.
-func (self *MySQL) InspectRapier(ctx context.Context, arg *driver.InspectOption) (*rapier.Schema, error) {
-	schemaes, err := self.inspectSchema(ctx, arg)
-	if err != nil {
-		return nil, err
-	}
-	entities := make([]*rapier.Struct, 0, len(schemaes.Tables))
-	for _, tb := range schemaes.Tables {
-		entities = append(entities, intoRapier(tb))
-	}
-	return &rapier.Schema{
 		Name:     schemaes.Name,
 		Entities: entities,
 	}, nil
