@@ -274,7 +274,7 @@ func intoSchema(tb *schema.Table) *ens.EntityDescriptor {
 			Column:     NewColumnDef(col),
 			Type:       intoGoType(col.Type.Raw),
 			GoName:     utils.CamelCase(col.Name),
-			Optional:   col.Type.Null,
+			GoPointer:  col.Type.Null,
 			Tags:       []string{intoGormTag(tb, col)},
 		})
 	}

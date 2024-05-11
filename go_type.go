@@ -195,7 +195,7 @@ type GoType struct {
 	Ident        string // Type identifier,  e.g. int, time.Time, sql.NullInt64.
 	PkgPath      string // import path. e.g. "", time, database/sql.
 	PkgQualifier string // a package qualifier. e.g. "", time, sql.
-	Nullable     bool   // pointers or slices, means not need point.
+	NoPointer    bool   // pointers or slices, means not need pointer.
 }
 
 func NewGoType(t Type, v any) *GoType {
@@ -209,7 +209,7 @@ func newGoType(t Type, tt reflect.Type) *GoType {
 		Ident:        tt.String(),
 		PkgPath:      tv.PkgPath(),
 		PkgQualifier: utils.PkgQualifier(tv.String()),
-		Nullable:     slices.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
+		NoPointer:    slices.Contains([]reflect.Kind{reflect.Slice, reflect.Ptr, reflect.Map}, tt.Kind()),
 	}
 }
 

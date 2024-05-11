@@ -73,7 +73,7 @@ func structToFielders(vt reflect.Type) []*FieldDescriptor {
 					Column:     nil,
 					Type:       newGoType(t, fv.Type),
 					GoName:     fv.Name,
-					Optional:   false,
+					GoPointer:  false,
 					Tags:       []string{},
 				},
 			)

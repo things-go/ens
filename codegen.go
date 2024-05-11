@@ -8,6 +8,7 @@ import (
 	"github.com/things-go/ens/matcher"
 	"github.com/things-go/ens/utils"
 	"golang.org/x/tools/imports"
+	"gorm.io/gorm"
 	"gorm.io/plugin/soft_delete"
 )
 
@@ -114,7 +115,7 @@ func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
 	b := strings.Builder{}
 	b.Grow(256)
 	ident := field.Type.Ident
-	if field.Optional && !field.Type.Nullable {
+	if field.GoPointer && !field.Type.NoPointer {
 		ident = "*" + field.Type.Ident
 	}
 	// field
@@ -176,49 +177,54 @@ func TransferEntityField(et *EntityDescriptor, opt *Option) *EntityDescriptor {
 }
 
 // 根规则转义一些数据
-func TransferField(f *FieldDescriptor, opt *Option) *FieldDescriptor {
-	field := *f
-	if field.ColumnName == "deleted_at" && field.Type.IsInteger() {
-		field.Optional = false
-		field.GoType(soft_delete.DeletedAt(0))
+func TransferField(oldField *FieldDescriptor, opt *Option) *FieldDescriptor {
+	newField := *oldField
+	if newField.ColumnName == "deleted_at" {
+		if newField.Type.IsInteger() {
+			newField.GoPointer = false
+			newField.GoType(soft_delete.DeletedAt(0))
+		} else if newField.Type.IsInteger() {
+			newField.GoPointer = false
+			newField.GoType(gorm.DeletedAt{})
+		}
 	}
 	if opt == nil {
 		opt = defaultOption()
 	}
 	if opt.EnableInt {
-		switch field.Type.Type {
+		switch newField.Type.Type {
 		case TypeInt8, TypeInt16, TypeInt32:
-			field.GoType(int(0))
+			newField.GoType(int(0))
 		case TypeUint8, TypeUint16, TypeUint32:
-			field.GoType(uint(0))
+			newField.GoType(uint(0))
 		}
 	}
-	if opt.EnableBoolInt && field.Type.IsBool() {
-		field.GoType(int(0))
+	if opt.EnableBoolInt && newField.Type.IsBool() {
+		newField.GoType(int(0))
 	}
-	if field.Nullable && opt.DisableNullToPoint {
-		gt, ok := sqlNullValueGoType[field.Type.Type]
+	if newField.Nullable && opt.DisableNullToPoint {
+		gt, ok := sqlNullValueGoType[newField.Type.Type]
 		if ok {
-			field.Type = gt.Clone()
-			field.Optional = false
+			newField.Type = gt.Clone()
+			newField.GoPointer = false
 		}
 	}
 	for tag, kind := range opt.Tags {
 		if tag == "json" {
-			if vv := matcher.JsonTag(field.Comment); vv != "" {
-				field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s"`, tag, vv))
+			if vv := matcher.JsonTag(newField.Comment); vv != "" {
+				newField.Tags = append(newField.Tags, fmt.Sprintf(`%s:"%s"`, tag, vv))
 				continue
 			}
 		}
-		vv := utils.StyleName(kind, field.ColumnName)
+		vv := utils.StyleName(kind, newField.ColumnName)
 		if vv == "" {
 			continue
 		}
-		if tag == "json" && matcher.HasAffixJSONTag(field.Comment) {
-			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty,string"`, tag, vv))
+		if tag == "json" && matcher.HasAffixJSONTag(newField.Comment) {
+			newField.Tags = append(newField.Tags, fmt.Sprintf(`%s:"%s,omitempty,string"`, tag, vv))
 		} else {
-			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty"`, tag, vv))
+			newField.Tags = append(newField.Tags, fmt.Sprintf(`%s:"%s,omitempty"`, tag, vv))
 		}
 	}
-	return &field
+	return &newField
 }

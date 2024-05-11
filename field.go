@@ -6,10 +6,10 @@ type FieldDescriptor struct {
 	Nullable   bool   // Nullable reports whether the column may be null.
 	Column     ColumnDef
 	// for go
-	Type     *GoType  // go type information.
-	GoName   string   // Go name
-	Optional bool     // nullable struct field.
-	Tags     []string // Tags struct tag
+	Type      *GoType  // go type information.
+	GoName    string   // Go name
+	GoPointer bool     // go field is pointer.
+	Tags      []string // Tags struct tag
 }
 
 func (field *FieldDescriptor) GoType(typ any) {
