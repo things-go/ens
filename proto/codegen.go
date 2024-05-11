@@ -99,7 +99,7 @@ func (g *CodeGen) Gen() *CodeGen {
 		g.Printf("message %s {\n", structName)
 		for i, m := range et.Fields {
 			if m.Comment != "" {
-				g.Printf("// %s\n", m.Comment)
+				g.Printf("  // %s\n", m.Comment)
 			}
 			typeName, annotations := g.intoTypeNameAndAnnotation(m)
 			fieldName := utils.StyleName(g.Style, m.Name)
@@ -109,9 +109,9 @@ func (g *CodeGen) Gen() *CodeGen {
 			}
 			seq := i + 1
 			if m.Cardinality == protoreflect.Required {
-				g.Printf("%s %s = %d%s;\n", typeName, fieldName, seq, annotation)
+				g.Printf("  %s %s = %d%s;\n", typeName, fieldName, seq, annotation)
 			} else {
-				g.Printf("%s %s %s = %d%s;\n", m.Cardinality.String(), typeName, fieldName, seq, annotation)
+				g.Printf("  %s %s %s = %d%s;\n", m.Cardinality.String(), typeName, fieldName, seq, annotation)
 			}
 		}
 		g.Println("}")
