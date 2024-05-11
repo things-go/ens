@@ -7,7 +7,6 @@ replace github.com/things-go/ens => ../..
 require (
 	ariga.io/atlas v0.22.0
 	github.com/spf13/cobra v1.8.0
-	github.com/spf13/pflag v1.0.5
 	github.com/things-go/ens v0.3.1
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.10
@@ -33,6 +32,7 @@ require (
 	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
 	github.com/pingcap/tidb/parser v0.0.0-20231013125129-93a834a6bf8d // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

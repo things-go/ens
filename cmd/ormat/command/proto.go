@@ -2,28 +2,16 @@ package command
 
 import (
 	"cmp"
-	"context"
-	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 
-	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
-	"github.com/things-go/ens"
-	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/utils"
 )
 
 type protoOpt struct {
-	// sql file
-	InputFile []string
-	Schema    string
-	// database url
-	Url     string
-	Tables  []string
-	Exclude []string
+	source
 
 	// output directory
 	OutputDir string
@@ -46,59 +34,12 @@ type protoCmd struct {
 func newProtoCmd() *protoCmd {
 	root := &protoCmd{}
 
-	protoSchema := func() (*ens.Schema, error) {
-		if root.Url != "" {
-			d, err := LoadDriver(root.Url)
-			if err != nil {
-				return nil, err
-			}
-			return d.InspectSchema(context.Background(), &driver.InspectOption{
-				URL: root.Url,
-				InspectOptions: schema.InspectOptions{
-					Mode:    schema.InspectTables,
-					Tables:  root.Tables,
-					Exclude: root.Exclude,
-				},
-			})
-		}
-		if len(root.InputFile) > 0 {
-			d, err := driver.LoadDriver(root.Schema)
-			if err != nil {
-				return nil, err
-			}
-			schemas := &ens.Schema{
-				Name:     "",
-				Entities: make([]*ens.EntityDescriptor, 0, 128),
-			}
-			for _, filename := range root.InputFile {
-				tmpSchema, err := func() (*ens.Schema, error) {
-					content, err := os.ReadFile(filename)
-					if err != nil {
-						return nil, err
-					}
-					return d.InspectSchema(context.Background(), &driver.InspectOption{
-						URL:            "",
-						Data:           string(content),
-						InspectOptions: schema.InspectOptions{},
-					})
-				}()
-				if err != nil {
-					slog.Warn("🧐 parse failed !!!", slog.String("file", filename), slog.Any("error", err))
-					continue
-				}
-				schemas.Entities = append(schemas.Entities, tmpSchema.Entities...)
-			}
-			return schemas, nil
-		}
-		return nil, errors.New("at least one of [url input] is required")
-	}
-
 	cmd := &cobra.Command{
 		Use:     "proto",
 		Short:   "Generate proto from database",
 		Example: "ormat proto",
 		RunE: func(*cobra.Command, []string) error {
-			sc, err := protoSchema()
+			sc, err := getSchema(&root.source)
 			if err != nil {
 				return err
 			}
@@ -132,7 +73,7 @@ func newProtoCmd() *protoCmd {
 	cmd.Flags().StringVarP(&root.Schema, "schema", "s", "file+mysql", "parser file driver, [file+mysql,file+tidb](仅input时有效)")
 
 	// database url
-	cmd.Flags().StringVarP(&root.Url, "url", "u", "", "mysql://root:123456@127.0.0.1:3306/test")
+	cmd.Flags().StringVarP(&root.URL, "url", "u", "", "mysql://root:123456@127.0.0.1:3306/test")
 	cmd.Flags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table(仅url时有效)")
 	cmd.Flags().StringSliceVarP(&root.Exclude, "exclude", "e", nil, "exclude table pattern(仅url时有效)")
 

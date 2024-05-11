@@ -9,7 +9,6 @@ import (
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/sqlx"
 	"github.com/things-go/ens/utils"
 )
 
@@ -60,7 +59,7 @@ func intoForeignKeySql(fk *schema.ForeignKey) string {
 
 func intoTableSql(tb *schema.Table) string {
 	b := &strings.Builder{}
-	b.Grow(64)
+	b.Grow(256)
 	fmt.Fprintf(b, "CREATE TABLE `%s` (\n", tb.Name)
 
 	remain := len(tb.Columns) + len(tb.Indexes) + len(tb.ForeignKeys)
@@ -199,14 +198,6 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 	}
 	b.WriteString(`"`)
 	return b.String()
-}
-
-func intoSql(tb *schema.Table) *sqlx.Table {
-	return &sqlx.Table{
-		Name:    tb.Name,
-		Sql:     intoTableSql(tb),
-		Comment: insql.MustComment(tb.Attrs),
-	}
 }
 
 func intoSchema(tb *schema.Table) *ens.EntityDescriptor {

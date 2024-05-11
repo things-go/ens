@@ -2,27 +2,16 @@ package command
 
 import (
 	"cmp"
-	"context"
-	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 
-	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
-	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/utils"
 )
 
 type modelOpt struct {
-	// sql file
-	InputFile []string
-	Schema    string
-	// database url
-	URL     string
-	Tables  []string
-	Exclude []string
+	source
 
 	OutputDir string
 
@@ -44,60 +33,12 @@ type modelCmd struct {
 func newModelCmd() *modelCmd {
 	root := &modelCmd{}
 
-	getSchema := func() (*ens.Schema, error) {
-		if root.URL != "" {
-			d, err := LoadDriver(root.URL)
-			if err != nil {
-				return nil, err
-			}
-			return d.InspectSchema(context.Background(), &driver.InspectOption{
-				URL: root.URL,
-				InspectOptions: schema.InspectOptions{
-					Mode:    schema.InspectTables,
-					Tables:  root.Tables,
-					Exclude: root.Exclude,
-				},
-			})
-		}
-		if len(root.InputFile) > 0 {
-			d, err := driver.LoadDriver(root.Schema)
-			if err != nil {
-				return nil, err
-			}
-			mixin := &ens.Schema{
-				Name:     "",
-				Entities: make([]*ens.EntityDescriptor, 0, 128),
-			}
-			for _, filename := range root.InputFile {
-				sc, err := func() (*ens.Schema, error) {
-					content, err := os.ReadFile(filename)
-					if err != nil {
-						return nil, err
-					}
-					return d.InspectSchema(context.Background(), &driver.InspectOption{
-						URL:            "",
-						Data:           string(content),
-						InspectOptions: schema.InspectOptions{},
-					})
-				}()
-				if err != nil {
-					slog.Warn("🧐 parse failed !!!", slog.String("file", filename), slog.Any("error", err))
-					continue
-				}
-				mixin.Entities = append(mixin.Entities, sc.Entities...)
-			}
-			return mixin, nil
-		}
-
-		return nil, errors.New("at least one of [url input] is required")
-	}
-
 	cmd := &cobra.Command{
 		Use:     "model",
 		Short:   "Generate model from database",
 		Example: "ormat model",
 		RunE: func(*cobra.Command, []string) error {
-			schemaes, err := getSchema()
+			schemaes, err := getSchema(&root.source)
 			if err != nil {
 				return err
 			}

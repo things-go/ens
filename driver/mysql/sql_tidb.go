@@ -8,7 +8,6 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/sqlx"
 
 	"ariga.io/atlas/sql/mysql"
 	"ariga.io/atlas/sql/schema"
@@ -43,32 +42,6 @@ func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption)
 		entities = append(entities, intoSchema(table))
 	}
 	return &ens.Schema{
-		Name:     "",
-		Entities: entities,
-	}, nil
-}
-
-// InspectSql implements driver.Driver.
-func (self *SQLTidb) InspectSql(ctx context.Context, arg *driver.InspectOption) (*sqlx.Schema, error) {
-	pr := parser.New()
-	stmts, _, err := pr.ParseSQL(arg.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	entities := make([]*sqlx.Table, 0, len(stmts))
-	for _, stmt := range stmts {
-		createStmt, ok := stmt.(*ast.CreateTableStmt)
-		if !ok {
-			continue
-		}
-		table, err := parserCreateTableStmtTable(createStmt)
-		if err != nil {
-			return nil, err
-		}
-		entities = append(entities, intoSql(table))
-	}
-	return &sqlx.Schema{
 		Name:     "",
 		Entities: entities,
 	}, nil

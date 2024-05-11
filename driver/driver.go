@@ -8,7 +8,6 @@ import (
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
-	"github.com/things-go/ens/sqlx"
 )
 
 const (
@@ -21,7 +20,6 @@ var drivers sync.Map
 
 type Driver interface {
 	InspectSchema(context.Context, *InspectOption) (*ens.Schema, error)
-	InspectSql(ctx context.Context, arg *InspectOption) (*sqlx.Schema, error)
 }
 
 func RegisterDriver(name string, d Driver) {

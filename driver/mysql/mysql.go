@@ -8,7 +8,6 @@ import (
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
-	"github.com/things-go/ens/sqlx"
 
 	_ "ariga.io/atlas/sql/mysql"
 	_ "github.com/go-sql-driver/mysql"
@@ -28,22 +27,6 @@ func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption)
 		entities = append(entities, intoSchema(tb))
 	}
 	return &ens.Schema{
-		Name:     schemaes.Name,
-		Entities: entities,
-	}, nil
-}
-
-// InspectSql implements driver.Driver.
-func (self *MySQL) InspectSql(ctx context.Context, arg *driver.InspectOption) (*sqlx.Schema, error) {
-	schemaes, err := self.inspectSchema(ctx, arg)
-	if err != nil {
-		return nil, err
-	}
-	entities := make([]*sqlx.Table, 0, len(schemaes.Tables))
-	for _, tb := range schemaes.Tables {
-		entities = append(entities, intoSql(tb))
-	}
-	return &sqlx.Schema{
 		Name:     schemaes.Name,
 		Entities: entities,
 	}, nil

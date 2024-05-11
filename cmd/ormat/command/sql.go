@@ -1,12 +1,9 @@
 package command
 
 import (
-	"context"
 	"log/slog"
 
-	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
-	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/sqlx"
 )
 
@@ -34,23 +31,15 @@ func newSqlCmd() *sqlCmd {
 		Short:   "Generate sql file",
 		Example: "ormat sql",
 		RunE: func(*cobra.Command, []string) error {
-			d, err := LoadDriver(root.URL)
-			if err != nil {
-				return err
-			}
-			schemaes, err := d.InspectSql(context.Background(), &driver.InspectOption{
-				URL:  root.URL,
-				Data: "",
-				InspectOptions: schema.InspectOptions{
-					Mode:    schema.InspectTables,
-					Tables:  root.Tables,
-					Exclude: root.Exclude,
-				},
+			sc, err := getSchema(&source{
+				URL:     root.URL,
+				Tables:  root.Tables,
+				Exclude: root.Exclude,
 			})
 			if err != nil {
 				return err
 			}
-
+			schemaes := sc.IntoSQL()
 			if root.Merge {
 				codegen := &sqlx.CodeGen{
 					Entities:          schemaes.Entities,

@@ -3,6 +3,7 @@ package ens
 import (
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
+	"github.com/things-go/ens/sqlx"
 	"github.com/things-go/ens/utils"
 )
 
@@ -38,6 +39,14 @@ func (s *EntityDescriptor) IntoRapier() *rapier.Struct {
 		TableName: s.Name,
 		Comment:   s.Comment,
 		Fields:    fields,
+	}
+}
+
+func (s *EntityDescriptor) IntoSQL() *sqlx.Table {
+	return &sqlx.Table{
+		Name:    s.Name,
+		Sql:     s.Table.Definition(),
+		Comment: s.Comment,
 	}
 }
 
