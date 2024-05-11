@@ -122,7 +122,7 @@ func intoTableSql(tb *schema.Table) string {
 	}
 	fmt.Fprintf(b, ") ENGINE=%s DEFAULT CHARSET=%s", engine, charset)
 	if collate != "" {
-		fmt.Fprintf(b, " COLLATE='%s'", collate)
+		fmt.Fprintf(b, " COLLATE=%s", collate)
 	}
 	if comment != "" {
 		fmt.Fprintf(b, " COMMENT='%s'", comment)
