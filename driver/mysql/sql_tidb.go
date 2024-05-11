@@ -8,7 +8,6 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 
@@ -45,32 +44,6 @@ func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption)
 		entities = append(entities, intoSchema(table))
 	}
 	return &ens.Schema{
-		Name:     "",
-		Entities: entities,
-	}, nil
-}
-
-// InspectSchema implements driver.Driver.
-func (self *SQLTidb) InspectProto(_ context.Context, arg *driver.InspectOption) (*proto.Schema, error) {
-	pr := parser.New()
-	stmts, _, err := pr.ParseSQL(arg.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	entities := make([]*proto.Message, 0, len(stmts))
-	for _, stmt := range stmts {
-		createStmt, ok := stmt.(*ast.CreateTableStmt)
-		if !ok {
-			continue
-		}
-		table, err := parserCreateTableStmtTable(createStmt)
-		if err != nil {
-			return nil, err
-		}
-		entities = append(entities, intoProto(table))
-	}
-	return &proto.Schema{
 		Name:     "",
 		Entities: entities,
 	}, nil

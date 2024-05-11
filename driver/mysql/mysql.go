@@ -8,7 +8,6 @@ import (
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
-	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 
@@ -30,21 +29,6 @@ func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption)
 		entities = append(entities, intoSchema(tb))
 	}
 	return &ens.Schema{
-		Name:     schemaes.Name,
-		Entities: entities,
-	}, nil
-}
-
-func (self *MySQL) InspectProto(ctx context.Context, arg *driver.InspectOption) (*proto.Schema, error) {
-	schemaes, err := self.inspectSchema(ctx, arg)
-	if err != nil {
-		return nil, err
-	}
-	entities := make([]*proto.Message, 0, len(schemaes.Tables))
-	for _, tb := range schemaes.Tables {
-		entities = append(entities, intoProto(tb))
-	}
-	return &proto.Schema{
 		Name:     schemaes.Name,
 		Entities: entities,
 	}, nil

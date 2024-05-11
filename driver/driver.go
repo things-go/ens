@@ -8,7 +8,6 @@ import (
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/things-go/ens"
-	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 )
@@ -23,7 +22,6 @@ var drivers sync.Map
 
 type Driver interface {
 	InspectSchema(context.Context, *InspectOption) (*ens.Schema, error)
-	InspectProto(context.Context, *InspectOption) (*proto.Schema, error)
 	InspectRapier(ctx context.Context, arg *InspectOption) (*rapier.Schema, error)
 	InspectSql(ctx context.Context, arg *InspectOption) (*sqlx.Schema, error)
 }

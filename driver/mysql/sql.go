@@ -12,7 +12,6 @@ import (
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 	"github.com/xwb1989/sqlparser"
@@ -31,18 +30,6 @@ func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (
 	return &ens.Schema{
 		Name:     "",
 		Entities: []*ens.EntityDescriptor{intoSchema(table)},
-	}, nil
-}
-
-// InspectProto implements driver.Driver.
-func (self *SQL) InspectProto(ctx context.Context, arg *driver.InspectOption) (*proto.Schema, error) {
-	table, err := self.inspectSchema(ctx, arg)
-	if err != nil {
-		return nil, err
-	}
-	return &proto.Schema{
-		Name:     "",
-		Entities: []*proto.Message{intoProto(table)},
 	}, nil
 }
 

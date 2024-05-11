@@ -1,5 +1,10 @@
 package ens
 
+import (
+	"github.com/things-go/ens/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+)
+
 type FieldDescriptor struct {
 	ColumnName string // 列名, snake case
 	Comment    string // 注释
@@ -14,4 +19,21 @@ type FieldDescriptor struct {
 
 func (field *FieldDescriptor) GoType(typ any) {
 	field.Type = NewGoType(field.Type.Type, typ)
+}
+
+func (field *FieldDescriptor) IntoProto() *proto.MessageField {
+	goType := field.Type
+	k, n := goType.Type.IntoProtoKind()
+	cardinality := protoreflect.Required
+	if field.Nullable {
+		cardinality = protoreflect.Optional
+	}
+	return &proto.MessageField{
+		Cardinality: cardinality,
+		Type:        k,
+		TypeName:    n,
+		Name:        field.ColumnName,
+		ColumnName:  field.ColumnName,
+		Comment:     field.Comment,
+	}
 }

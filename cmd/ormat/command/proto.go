@@ -10,6 +10,7 @@ import (
 
 	"ariga.io/atlas/sql/schema"
 	"github.com/spf13/cobra"
+	"github.com/things-go/ens"
 	"github.com/things-go/ens/driver"
 	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/utils"
@@ -45,13 +46,13 @@ type protoCmd struct {
 func newProtoCmd() *protoCmd {
 	root := &protoCmd{}
 
-	protoSchema := func() (*proto.Schema, error) {
+	protoSchema := func() (*ens.Schema, error) {
 		if root.Url != "" {
 			d, err := LoadDriver(root.Url)
 			if err != nil {
 				return nil, err
 			}
-			return d.InspectProto(context.Background(), &driver.InspectOption{
+			return d.InspectSchema(context.Background(), &driver.InspectOption{
 				URL: root.Url,
 				InspectOptions: schema.InspectOptions{
 					Mode:    schema.InspectTables,
@@ -65,17 +66,17 @@ func newProtoCmd() *protoCmd {
 			if err != nil {
 				return nil, err
 			}
-			schemas := &proto.Schema{
+			schemas := &ens.Schema{
 				Name:     "",
-				Entities: make([]*proto.Message, 0, 128),
+				Entities: make([]*ens.EntityDescriptor, 0, 128),
 			}
 			for _, filename := range root.InputFile {
-				tmpSchema, err := func() (*proto.Schema, error) {
+				tmpSchema, err := func() (*ens.Schema, error) {
 					content, err := os.ReadFile(filename)
 					if err != nil {
 						return nil, err
 					}
-					return d.InspectProto(context.Background(), &driver.InspectOption{
+					return d.InspectSchema(context.Background(), &driver.InspectOption{
 						URL:            "",
 						Data:           string(content),
 						InspectOptions: schema.InspectOptions{},
@@ -101,7 +102,8 @@ func newProtoCmd() *protoCmd {
 			if err != nil {
 				return err
 			}
-			for _, msg := range sc.Entities {
+			protoSchemaes := sc.IntoProto()
+			for _, msg := range protoSchemaes.Entities {
 				codegen := &proto.CodeGen{
 					Messages:                  []*proto.Message{msg},
 					ByName:                    "ormat",

@@ -6,11 +6,9 @@ import (
 
 	"ariga.io/atlas/sql/mysql"
 	"ariga.io/atlas/sql/schema"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/internal/insql"
-	"github.com/things-go/ens/proto"
 	"github.com/things-go/ens/rapier"
 	"github.com/things-go/ens/sqlx"
 	"github.com/things-go/ens/utils"
@@ -202,33 +200,6 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 	}
 	b.WriteString(`"`)
 	return b.String()
-}
-
-func intoProto(tb *schema.Table) *proto.Message {
-	// * columns
-	fields := make([]*proto.MessageField, 0, len(tb.Columns))
-	for _, col := range tb.Columns {
-		goType := intoGoType(col.Type.Raw)
-		k, n := goType.Type.IntoProtoKind()
-		cardinality := protoreflect.Required
-		if col.Type.Null {
-			cardinality = protoreflect.Optional
-		}
-		fields = append(fields, &proto.MessageField{
-			Cardinality: cardinality,
-			Type:        k,
-			TypeName:    n,
-			Name:        col.Name,
-			ColumnName:  col.Name,
-			Comment:     insql.MustComment(col.Attrs),
-		})
-	}
-	return &proto.Message{
-		Name:      tb.Name,
-		TableName: tb.Name,
-		Comment:   insql.MustComment(tb.Attrs),
-		Fields:    fields,
-	}
 }
 
 func intoRapier(tb *schema.Table) *rapier.Struct {
