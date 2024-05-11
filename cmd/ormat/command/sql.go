@@ -74,13 +74,15 @@ func newSqlCmd() *sqlCmd {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&root.URL, "url", "", "mysql://root:123456@127.0.0.1:3306/test)")
-	cmd.PersistentFlags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
-	cmd.PersistentFlags().StringSliceVar(&root.Exclude, "exclude", nil, "exclude table pattern")
+	cmd.Flags().StringVarP(&root.URL, "url", "u", "", "mysql://root:123456@127.0.0.1:3306/test")
+	cmd.Flags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
+	cmd.Flags().StringSliceVarP(&root.Exclude, "exclude", "e", nil, "exclude table pattern")
+
 	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./migration", "out directory")
+
 	cmd.Flags().StringVar(&root.Filename, "filename", "create_table", "filename when merge enabled")
 	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file")
-	cmd.Flags().BoolVarP(&root.DisableDocComment, "disableDocComment", "d", false, "禁用文档注释")
+	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")
 
 	cmd.MarkFlagRequired("url")
 

@@ -91,24 +91,25 @@ func newModelCmd() *modelCmd {
 	cmd.Flags().StringSliceVarP(&root.InputFile, "input", "i", nil, "input file")
 	cmd.Flags().StringVarP(&root.Schema, "schema", "s", "file+mysql", "parser file driver, [file+mysql,file+tidb](仅input时有效)")
 	// database url
-	cmd.PersistentFlags().StringVar(&root.URL, "url", "", "mysql://root:123456@127.0.0.1:3306/test")
-	cmd.PersistentFlags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
-	cmd.PersistentFlags().StringSliceVar(&root.Exclude, "exclude", nil, "exclude table pattern")
+	cmd.Flags().StringVarP(&root.URL, "url", "u", "", "mysql://root:123456@127.0.0.1:3306/test")
+	cmd.Flags().StringSliceVarP(&root.Tables, "table", "t", nil, "only out custom table")
+	cmd.Flags().StringSliceVarP(&root.Exclude, "exclude", "e", nil, "exclude table pattern")
 
-	cmd.PersistentFlags().StringVarP(&root.OutputDir, "out", "o", "./model", "out directory")
+	cmd.Flags().StringVarP(&root.OutputDir, "out", "o", "./model", "out directory")
 
-	cmd.PersistentFlags().StringVar(&root.PackageName, "package", "", "package name")
-	cmd.PersistentFlags().BoolVarP(&root.DisableDocComment, "disableDocComment", "d", false, "禁用文档注释")
+	cmd.Flags().StringVar(&root.PackageName, "package", "", "package name")
+	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")
 
-	cmd.PersistentFlags().StringToStringVarP(&root.Tags, "tags", "K", map[string]string{"json": utils.StyleSmallCamelCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
-	cmd.PersistentFlags().BoolVarP(&root.EnableInt, "enableInt", "e", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
-	cmd.PersistentFlags().BoolVarP(&root.EnableBoolInt, "enableBoolInt", "b", false, "使能bool输出int")
-	cmd.PersistentFlags().BoolVarP(&root.DisableNullToPoint, "disableNullToPoint", "B", false, "禁用字段为null时输出指针类型,将输出为sql.Nullxx")
-	cmd.PersistentFlags().BoolVarP(&root.DisableCommentTag, "disableCommentTag", "j", false, "禁用注释放入tag标签中")
-	cmd.PersistentFlags().BoolVarP(&root.EnableForeignKey, "enableForeignKey", "J", false, "使用外键")
+	cmd.Flags().StringToStringVar(&root.Tags, "tags", map[string]string{"json": utils.StyleSmallCamelCase}, "tags标签,类型支持[smallCamelCase,camelCase,snakeCase,kebab]")
+	cmd.Flags().BoolVar(&root.EnableInt, "enableInt", false, "使能int8,uint8,int16,uint16,int32,uint32输出为int,uint")
+	cmd.Flags().BoolVar(&root.EnableBoolInt, "enableBoolInt", false, "使能bool输出int")
+	cmd.Flags().BoolVar(&root.DisableNullToPoint, "disableNullToPoint", false, "禁用字段为null时输出指针类型,将输出为sql.Nullxx")
+	cmd.Flags().BoolVar(&root.DisableCommentTag, "disableCommentTag", false, "禁用注释放入tag标签中")
+	cmd.Flags().BoolVar(&root.EnableForeignKey, "enableForeignKey", false, "使用外键")
+	cmd.Flags().StringSliceVar(&root.EscapeName, "escapeName", nil, "exclude table pattern")
 
-	cmd.PersistentFlags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
-	cmd.PersistentFlags().StringVar(&root.MergeFilename, "model", "", "merge filename")
+	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
+	cmd.Flags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
 
 	cmd.MarkPersistentFlagRequired("url") // nolint
 
