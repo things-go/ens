@@ -42,12 +42,13 @@ func newRapierCmd() *rapierCmd {
 				return err
 			}
 			rapierSchemaes := sc.IntoRapier()
+			packageName := cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir))
 			for _, entity := range rapierSchemaes.Entities {
 				codegen := &rapier.CodeGen{
 					Entities:          []*rapier.Struct{entity},
 					ByName:            "ormat",
 					Version:           version,
-					PackageName:       cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
+					PackageName:       packageName,
 					ModelImportPath:   root.ModelImportPath,
 					DisableDocComment: root.DisableDocComment,
 					EnableInt:         root.EnableInt,

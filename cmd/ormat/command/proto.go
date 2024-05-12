@@ -44,12 +44,13 @@ func newProtoCmd() *protoCmd {
 				return err
 			}
 			protoSchemaes := sc.IntoProto()
+			packageName := cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir))
 			for _, msg := range protoSchemaes.Entities {
 				codegen := &proto.CodeGen{
 					Messages:                  []*proto.Message{msg},
 					ByName:                    "ormat",
 					Version:                   version,
-					PackageName:               cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
+					PackageName:               packageName,
 					Options:                   root.Options,
 					Style:                     root.Style,
 					DisableDocComment:         root.DisableDocComment,

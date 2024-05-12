@@ -43,12 +43,13 @@ func newModelCmd() *modelCmd {
 			if err != nil {
 				return err
 			}
+			packageName := cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir))
 			if root.Merge {
 				g := ens.CodeGen{
 					Entities:          schemaes.Entities,
 					ByName:            "ormat",
 					Version:           version,
-					PackageName:       cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir)),
+					PackageName:       packageName,
 					DisableDocComment: root.DisableDocComment,
 					Option:            root.Option,
 				}
@@ -71,7 +72,7 @@ func newModelCmd() *modelCmd {
 							Entities:          []*ens.EntityDescriptor{entity},
 							ByName:            "ormat",
 							Version:           version,
-							PackageName:       utils.GetPkgName(root.OutputDir),
+							PackageName:       packageName,
 							DisableDocComment: root.DisableDocComment,
 							Option:            root.Option,
 						}
