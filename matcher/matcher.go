@@ -8,7 +8,6 @@ import (
 var reJSONTag = regexp.MustCompile(`^.*\[@(?i:jsontag):\s*([^\[\]]*)\].*`)
 var reAffixJSONTag = regexp.MustCompile(`^.*\[@(affix)\s*\].*`)
 var reProtobufType = regexp.MustCompile(`^.*\[@(?i:pbtype):\s*([^\[\]]*)\].*`)
-var reProtobufEnumValue = regexp.MustCompile(`@EnumValue\[[^\]]*\]`)
 
 // JsonTag 匹配json标签
 // [@jsontag:id,omitempty]
@@ -35,9 +34,4 @@ func PbType(comment string) string {
 		return strings.TrimSpace(match[1])
 	}
 	return ""
-}
-
-// TrimEnumValue 去除 @EnumValue[xxxx] 的数据
-func TrimEnumValue(value string) string {
-	return strings.TrimSpace(reProtobufEnumValue.ReplaceAllString(value, ""))
 }

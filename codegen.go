@@ -189,7 +189,7 @@ func (field *FieldDescriptor) fixField(allFieldName, escapeFieldNames map[string
 		field.Type = IntType().WithNewType(field.Type.Type)
 	}
 	if field.Nullable && opt.DisableNullToPoint {
-		gt, ok := sqlNullValueGoType[field.Type.Type]
+		gt, ok := getSQLNullValueGoType(field.Type.Type)
 		if ok {
 			field.Type = gt
 			field.GoPointer = false

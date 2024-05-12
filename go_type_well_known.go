@@ -55,6 +55,11 @@ var sqlNullValueGoType = map[Type]GoType{
 	TypeTime:    sqlNullTimeType,
 }
 
+func getSQLNullValueGoType(t Type) (GoType, bool) {
+	v, ok := sqlNullValueGoType[t]
+	return v, ok
+}
+
 func BoolType() GoType           { return boolType }
 func IntType() GoType            { return intType }
 func Int8Type() GoType           { return int8Type }

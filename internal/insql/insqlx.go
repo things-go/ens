@@ -62,20 +62,6 @@ func Collation(elements []schema.Attr) (string, bool) {
 	return val.V, ok
 }
 
-// DefaultValue returns the string represents the DEFAULT of a column.
-func DefaultValue(c *schema.Column) (string, bool) {
-	switch x := schema.UnderlyingExpr(c.Default).(type) {
-	case nil:
-		return "", false
-	case *schema.Literal:
-		return x.V, true
-	case *schema.RawExpr:
-		return x.X, true
-	default:
-		panic(fmt.Sprintf("unexpected default value type: %T", x))
-	}
-}
-
 func IndexEqual(idx1, idx2 *schema.Index) bool {
 	return idx1 != nil && idx2 != nil && (idx1 == idx2 || idx1.Name == idx2.Name)
 }

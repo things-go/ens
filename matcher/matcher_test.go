@@ -125,8 +125,3 @@ func Test_ProtobufType(t *testing.T) {
 		})
 	}
 }
-
-func Test_TrimEnumValue(t *testing.T) {
-	a := TrimEnumValue("some text@EnumValue[1:a,2:哈哈]")
-	t.Log(a)
-}
