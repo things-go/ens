@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/things-go/ens/utils"
-	"golang.org/x/tools/imports"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -29,16 +28,6 @@ type CodeGen struct {
 // Bytes returns the CodeBuf's buffer.
 func (g *CodeGen) Bytes() []byte {
 	return g.buf.Bytes()
-}
-
-// FormatSource return formats and adjusts imports contents of the CodeGen's buffer.
-func (g *CodeGen) FormatSource() ([]byte, error) {
-	data := g.buf.Bytes()
-	if len(data) == 0 {
-		return data, nil
-	}
-	// return format.Source(data)
-	return imports.Process("", data, nil)
 }
 
 // Write appends the contents of p to the buffer,

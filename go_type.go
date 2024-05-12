@@ -198,13 +198,13 @@ type GoType struct {
 	NoPointer    bool   // pointers or slices, means not need pointer.
 }
 
-func NewGoType(t Type, v any) *GoType {
+func NewGoType(t Type, v any) GoType {
 	return newGoType(t, reflect.TypeOf(v))
 }
 
-func newGoType(t Type, tt reflect.Type) *GoType {
+func newGoType(t Type, tt reflect.Type) GoType {
 	tv := indirect(tt)
-	return &GoType{
+	return GoType{
 		Type:         t,
 		Ident:        tt.String(),
 		PkgPath:      tv.PkgPath(),
@@ -213,14 +213,14 @@ func newGoType(t Type, tt reflect.Type) *GoType {
 	}
 }
 
-func (t *GoType) WithNewType(tp Type) *GoType {
+func (t GoType) WithNewType(tp Type) GoType {
 	t.Type = tp
 	return t
 }
 
-func (t *GoType) Clone() *GoType {
+func (t *GoType) Clone() GoType {
 	tt := *t
-	return &tt
+	return tt
 }
 
 // String returns the string representation of a type.

@@ -34,7 +34,15 @@ func (g *CodeGen) FormatSource() ([]byte, error) {
 		return data, nil
 	}
 	// return format.Source(data)
-	return imports.Process("", data, nil)
+	// 格式化时, 如果需要插入或删除包是非常耗时的
+	return imports.Process("", data, &imports.Options{
+		Fragment:   false,
+		AllErrors:  false,
+		Comments:   true,
+		TabIndent:  true,
+		TabWidth:   4,
+		FormatOnly: false,
+	})
 }
 
 // Write appends the contents of p to the buffer,
@@ -71,6 +79,10 @@ func (g *CodeGen) Gen() *CodeGen {
 	g.Printf("package %s\n", g.PackageName)
 	g.Println()
 
+	//* 先处理转义, 主要是一些需要导入的包, 各种选项. 避免格式化耗时.
+	for _, et := range g.Entities {
+		et.fixEntityField(&g.Option)
+	}
 	//* import
 	imports := make(map[string]struct{})
 	for _, st := range g.Entities {
@@ -91,7 +103,6 @@ func (g *CodeGen) Gen() *CodeGen {
 	for _, et := range g.Entities {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
-		et.fixEntityField(&g.Option)
 		g.Printf("// %s %s\n", structName, strings.ReplaceAll(strings.TrimSpace(et.Comment), "\n", "\n// "))
 		g.Printf("type %s struct {\n", structName)
 		for _, field := range et.Fields {
@@ -110,7 +121,7 @@ func (g *CodeGen) Gen() *CodeGen {
 
 func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
 	b := strings.Builder{}
-	b.Grow(256)
+	b.Grow(128)
 	ident := field.Type.Ident
 	if field.GoPointer && !field.Type.NoPointer {
 		ident = "*" + field.Type.Ident
@@ -135,7 +146,7 @@ func (et *EntityDescriptor) fixEntityField(opt *Option) {
 	if opt == nil {
 		opt = defaultOption()
 	}
-	escapeNames := make(map[string]struct{})
+	escapeNames := make(map[string]struct{}, len(mustEscapeNames)+len(opt.EscapeName)+len(et.Fields))
 	for _, v := range mustEscapeNames {
 		escapeNames[v] = struct{}{}
 	}
@@ -146,6 +157,7 @@ func (et *EntityDescriptor) fixEntityField(opt *Option) {
 	for _, field := range et.Fields {
 		allFieldName[field.GoName] = struct{}{}
 	}
+
 	for _, field := range et.Fields {
 		field.fixField(allFieldName, escapeNames, opt)
 	}
@@ -156,10 +168,10 @@ func (field *FieldDescriptor) fixField(allFieldName, escapeFieldNames map[string
 	if field.ColumnName == "deleted_at" {
 		if field.Type.IsInteger() {
 			field.GoPointer = false
-			field.Type = SoftDeleteType().Clone().WithNewType(field.Type.Type)
+			field.Type = SoftDeleteType().WithNewType(field.Type.Type)
 		} else if field.Type.IsInteger() {
 			field.GoPointer = false
-			field.Type = GormDeletedAtType().Clone().WithNewType(field.Type.Type)
+			field.Type = GormDeletedAtType().WithNewType(field.Type.Type)
 		}
 	}
 	if opt == nil {
@@ -168,18 +180,18 @@ func (field *FieldDescriptor) fixField(allFieldName, escapeFieldNames map[string
 	if opt.EnableInt {
 		switch field.Type.Type {
 		case TypeInt8, TypeInt16, TypeInt32:
-			field.Type = IntType().Clone().WithNewType(field.Type.Type)
+			field.Type = IntType().WithNewType(field.Type.Type)
 		case TypeUint8, TypeUint16, TypeUint32:
-			field.Type = UintType().Clone().WithNewType(field.Type.Type)
+			field.Type = UintType().WithNewType(field.Type.Type)
 		}
 	}
 	if opt.EnableBoolInt && field.Type.IsBool() {
-		field.Type = IntType().Clone().WithNewType(field.Type.Type)
+		field.Type = IntType().WithNewType(field.Type.Type)
 	}
 	if field.Nullable && opt.DisableNullToPoint {
 		gt, ok := sqlNullValueGoType[field.Type.Type]
 		if ok {
-			field.Type = gt.Clone()
+			field.Type = gt
 			field.GoPointer = false
 		}
 	}

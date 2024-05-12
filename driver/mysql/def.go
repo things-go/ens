@@ -11,7 +11,7 @@ import (
 // \b([(]\d+[)])? 匹配0个或1个(\d+)
 var typeDictMatchList = []struct {
 	Key     string
-	NewType func() *ens.GoType
+	NewType func() ens.GoType
 }{
 	{`^(bool)`, ens.BoolType},                                 // bool
 	{`^(tinyint)\b[(]1[)] unsigned`, ens.BoolType},            // bool
@@ -57,7 +57,7 @@ var typeDictMatchList = []struct {
 	{`^(geometry)`, ens.StringType},                           // string
 }
 
-func intoGoType(columnType string) *ens.GoType {
+func intoGoType(columnType string) ens.GoType {
 	for _, v := range typeDictMatchList {
 		ok, _ := regexp.MatchString(v.Key, columnType)
 		if ok {

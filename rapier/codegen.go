@@ -36,7 +36,15 @@ func (g *CodeGen) FormatSource() ([]byte, error) {
 		return data, nil
 	}
 	// return format.Source(data)
-	return imports.Process("", data, nil)
+	// 格式化时, 如果需要插入或删除包是非常耗时的
+	return imports.Process("", data, &imports.Options{
+		Fragment:   false,
+		AllErrors:  false,
+		Comments:   true,
+		TabIndent:  true,
+		TabWidth:   4,
+		FormatOnly: false,
+	})
 }
 
 // Write appends the contents of p to the buffer,

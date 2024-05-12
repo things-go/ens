@@ -12,7 +12,7 @@ type FieldDescriptor struct {
 	Nullable   bool   // Nullable reports whether the column may be null.
 	Column     ColumnDef
 	// for go
-	Type      *GoType  // go type information.
+	Type      GoType   // go type information.
 	GoName    string   // Go name
 	GoPointer bool     // go field is pointer.
 	Tags      []string // Tags struct tag
