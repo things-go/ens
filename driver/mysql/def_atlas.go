@@ -25,12 +25,27 @@ func intoColumnSql(col *schema.Column) string {
 	if autoIncrement {
 		b.WriteString(" AUTO_INCREMENT")
 	} else {
-		dv, ok := insql.DefaultValue(col)
-		if ok {
+		switch x := schema.UnderlyingExpr(col.Default).(type) {
+		case *schema.Literal:
+			dv := x.V
+			if dv == `""` || dv == "" {
+				dv = "''"
+			} else {
+				dv = strings.Trim(dv, `"`) // format: `"xxx"` or `'xxx'`
+			}
 			fmt.Fprintf(b, " DEFAULT '%s'", strings.Trim(dv, `"`))
-		} else if nullable {
-			b.WriteString(" DEFAULT NULL")
+		case *schema.RawExpr:
+			fmt.Fprintf(b, " DEFAULT %s", x.X)
+		case nil:
+			if col.Type.Null {
+				b.WriteString(" DEFAULT NULL")
+			}
+		default:
+			// do nothing
 		}
+	}
+	if v, ok := onUpdate(col.Attrs); ok {
+		fmt.Fprintf(b, " ON UPDATE %s", v)
 	}
 	return b.String()
 }
