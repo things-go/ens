@@ -168,16 +168,23 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 			fmt.Fprintf(b, ";autoIncrement:true")
 		}
 	} else {
-		dv, ok := insql.DefaultValue(col)
-		if ok {
+		switch x := schema.UnderlyingExpr(col.Default).(type) {
+		case *schema.Literal:
+			dv := x.V
 			if dv == `""` || dv == "" {
 				dv = "''"
 			} else {
 				dv = strings.Trim(dv, `"`) // format: `"xxx"` or `'xxx'`
 			}
 			fmt.Fprintf(b, ";default:%s", dv)
-		} else if col.Type.Null {
-			fmt.Fprintf(b, ";default:null")
+		case *schema.RawExpr:
+			fmt.Fprintf(b, ";default:%s", x.X)
+		case nil:
+			if col.Type.Null {
+				fmt.Fprintf(b, ";default:null")
+			}
+		default:
+			// do nothing
 		}
 	}
 
