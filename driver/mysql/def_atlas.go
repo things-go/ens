@@ -168,23 +168,30 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 			fmt.Fprintf(b, ";autoIncrement:true")
 		}
 	} else {
+		dv := ""
 		switch x := schema.UnderlyingExpr(col.Default).(type) {
 		case *schema.Literal:
-			dv := x.V
+			dv = x.V
 			if dv == `""` || dv == "" {
 				dv = "''"
 			} else {
 				dv = strings.Trim(dv, `"`) // format: `"xxx"` or `'xxx'`
 			}
-			fmt.Fprintf(b, ";default:%s", dv)
 		case *schema.RawExpr:
-			fmt.Fprintf(b, ";default:%s", x.X)
+			dv = x.X
 		case nil:
 			if col.Type.Null {
-				fmt.Fprintf(b, ";default:null")
+				dv = "null"
 			}
 		default:
 			// do nothing
+		}
+		// FIXME: bug, gorm目前 on update放在default上. 所以必须default存在.
+		if dv != "" {
+			if v, ok := onUpdate(col.Attrs); ok {
+				dv = fmt.Sprintf("%s ON UPDATE %s", dv, v)
+			}
+			fmt.Fprintf(b, ";default:%s", dv)
 		}
 	}
 
