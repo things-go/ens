@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/sourcegraph/conc/pool"
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
 	"github.com/things-go/ens/utils"
@@ -64,34 +63,25 @@ func newModelCmd() *modelCmd {
 				}
 				slog.Info("👉 " + filename)
 			} else {
-				pl := pool.New().WithErrors().WithFirstError()
 				for _, entity := range schemaes.Entities {
-					entity := entity
-					pl.Go(func() error {
-						g := &ens.CodeGen{
-							Entities:          []*ens.EntityDescriptor{entity},
-							ByName:            "ormat",
-							Version:           version,
-							PackageName:       packageName,
-							DisableDocComment: root.DisableDocComment,
-							Option:            root.Option,
-						}
-						data, err := g.Gen().FormatSource()
-						if err != nil {
-							return fmt.Errorf("%v: %v", entity.Name, err)
-						}
-						filename := joinFilename(root.OutputDir, entity.Name, ".go")
-						err = WriteFile(filename, data)
-						if err != nil {
-							return fmt.Errorf("%v: %v", entity.Name, err)
-						}
-						slog.Info("👉 " + filename)
-						return nil
-					})
-				}
-				err = pl.Wait()
-				if err != nil {
-					return err
+					g := &ens.CodeGen{
+						Entities:          []*ens.EntityDescriptor{entity},
+						ByName:            "ormat",
+						Version:           version,
+						PackageName:       packageName,
+						DisableDocComment: root.DisableDocComment,
+						Option:            root.Option,
+					}
+					data, err := g.Gen().FormatSource()
+					if err != nil {
+						return fmt.Errorf("%v: %v", entity.Name, err)
+					}
+					filename := joinFilename(root.OutputDir, entity.Name, ".go")
+					err = WriteFile(filename, data)
+					if err != nil {
+						return fmt.Errorf("%v: %v", entity.Name, err)
+					}
+					slog.Info("👉 " + filename)
 				}
 			}
 			slog.Info("😄 generate success !!!")

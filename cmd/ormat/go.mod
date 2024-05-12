@@ -6,7 +6,6 @@ replace github.com/things-go/ens => ../..
 
 require (
 	ariga.io/atlas v0.22.0
-	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.8.0
 	github.com/things-go/ens v0.3.1
 	gorm.io/driver/sqlite v1.5.5

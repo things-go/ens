@@ -134,6 +134,7 @@ func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
 	return b.String()
 }
 
+// BUG: 占CPU
 func TransferEntityField(et *EntityDescriptor, opt *Option) *EntityDescriptor {
 	newEt := *et
 	newEt.Fields = make([]*FieldDescriptor, 0, len(et.Fields))
