@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 	"gorm.io/plugin/soft_delete"
 )
 
@@ -48,5 +49,6 @@ func SQLNullStringType() *GoType  { return NewGoType(TypeString, sql.NullString{
 func SQLNullTimeType() *GoType    { return NewGoType(TypeTime, sql.NullTime{}) }
 func JSONRawMessageType() *GoType { return NewGoType(TypeJSON, json.RawMessage{}) }
 func SoftDeleteType() *GoType     { return NewGoType(TypeInt64, soft_delete.DeletedAt(0)) }
+func GormDeletedAtType() *GoType  { return NewGoType(TypeInt64, gorm.DeletedAt{}) }
 func DatatypesDateType() *GoType  { return NewGoType(TypeTime, datatypes.Date{}) }
 func DatatypesJSONType() *GoType  { return NewGoType(TypeJSON, datatypes.JSON{}) }

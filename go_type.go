@@ -213,6 +213,11 @@ func newGoType(t Type, tt reflect.Type) *GoType {
 	}
 }
 
+func (t *GoType) WithNewType(tp Type) *GoType {
+	t.Type = tp
+	return t
+}
+
 func (t *GoType) Clone() *GoType {
 	tt := *t
 	return &tt

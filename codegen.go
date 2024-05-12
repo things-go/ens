@@ -8,8 +8,6 @@ import (
 	"github.com/things-go/ens/matcher"
 	"github.com/things-go/ens/utils"
 	"golang.org/x/tools/imports"
-	"gorm.io/gorm"
-	"gorm.io/plugin/soft_delete"
 )
 
 var mustEscapeNames = []string{"TableName"}
@@ -89,15 +87,14 @@ func (g *CodeGen) Gen() *CodeGen {
 		}
 		g.Println(")")
 	}
-
 	//* struct
 	for _, et := range g.Entities {
 		structName := utils.CamelCase(et.Name)
 		tableName := et.Name
-		newEt := TransferEntityField(et, &g.Option)
+		et.fixEntityField(&g.Option)
 		g.Printf("// %s %s\n", structName, strings.ReplaceAll(strings.TrimSpace(et.Comment), "\n", "\n// "))
 		g.Printf("type %s struct {\n", structName)
-		for _, field := range newEt.Fields {
+		for _, field := range et.Fields {
 			g.Println(g.genModelStructField(field))
 		}
 		g.Println("}")
@@ -134,11 +131,7 @@ func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
 	return b.String()
 }
 
-// BUG: 占CPU
-func TransferEntityField(et *EntityDescriptor, opt *Option) *EntityDescriptor {
-	newEt := *et
-	newEt.Fields = make([]*FieldDescriptor, 0, len(et.Fields))
-
+func (et *EntityDescriptor) fixEntityField(opt *Option) {
 	if opt == nil {
 		opt = defaultOption()
 	}
@@ -149,83 +142,79 @@ func TransferEntityField(et *EntityDescriptor, opt *Option) *EntityDescriptor {
 	for _, k := range opt.EscapeName {
 		escapeNames[k] = struct{}{}
 	}
-	existFieldName := make(map[string]struct{}, len(et.Fields))
+	allFieldName := make(map[string]struct{}, len(et.Fields))
 	for _, field := range et.Fields {
-		existFieldName[field.GoName] = struct{}{}
+		allFieldName[field.GoName] = struct{}{}
 	}
 	for _, field := range et.Fields {
-		newField := TransferField(field, opt)
-		goName := newField.GoName
-		for {
-			_, ok := escapeNames[goName]
-			if !ok { // need to escape
-				break
-			}
-			goName = "X" + goName
-			// 和当前字段存在的重复, 再追加一个
-			_, ok = existFieldName[goName]
-			if ok {
-				goName = "X" + goName
-			}
-		}
-		if newField.GoName != goName {
-			newField.GoName = goName
-			escapeNames[goName] = struct{}{} // 添加为必须转义
-		}
-		newEt.Fields = append(newEt.Fields, newField)
+		field.fixField(allFieldName, escapeNames, opt)
 	}
-	return &newEt
 }
 
-// 根规则转义一些数据
-func TransferField(oldField *FieldDescriptor, opt *Option) *FieldDescriptor {
-	newField := *oldField
-	if newField.ColumnName == "deleted_at" {
-		if newField.Type.IsInteger() {
-			newField.GoPointer = false
-			newField.GoType(soft_delete.DeletedAt(0))
-		} else if newField.Type.IsInteger() {
-			newField.GoPointer = false
-			newField.GoType(gorm.DeletedAt{})
+// 根据规则转义一些数据
+func (field *FieldDescriptor) fixField(allFieldName, escapeFieldNames map[string]struct{}, opt *Option) {
+	if field.ColumnName == "deleted_at" {
+		if field.Type.IsInteger() {
+			field.GoPointer = false
+			field.Type = SoftDeleteType().Clone().WithNewType(field.Type.Type)
+		} else if field.Type.IsInteger() {
+			field.GoPointer = false
+			field.Type = GormDeletedAtType().Clone().WithNewType(field.Type.Type)
 		}
 	}
 	if opt == nil {
 		opt = defaultOption()
 	}
 	if opt.EnableInt {
-		switch newField.Type.Type {
+		switch field.Type.Type {
 		case TypeInt8, TypeInt16, TypeInt32:
-			newField.GoType(int(0))
+			field.Type = IntType().Clone().WithNewType(field.Type.Type)
 		case TypeUint8, TypeUint16, TypeUint32:
-			newField.GoType(uint(0))
+			field.Type = UintType().Clone().WithNewType(field.Type.Type)
 		}
 	}
-	if opt.EnableBoolInt && newField.Type.IsBool() {
-		newField.GoType(int(0))
+	if opt.EnableBoolInt && field.Type.IsBool() {
+		field.Type = IntType().Clone().WithNewType(field.Type.Type)
 	}
-	if newField.Nullable && opt.DisableNullToPoint {
-		gt, ok := sqlNullValueGoType[newField.Type.Type]
+	if field.Nullable && opt.DisableNullToPoint {
+		gt, ok := sqlNullValueGoType[field.Type.Type]
 		if ok {
-			newField.Type = gt.Clone()
-			newField.GoPointer = false
+			field.Type = gt.Clone()
+			field.GoPointer = false
 		}
 	}
 	for tag, kind := range opt.Tags {
 		if tag == "json" {
-			if vv := matcher.JsonTag(newField.Comment); vv != "" {
-				newField.Tags = append(newField.Tags, fmt.Sprintf(`%s:"%s"`, tag, vv))
+			if vv := matcher.JsonTag(field.Comment); vv != "" {
+				field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s"`, tag, vv))
 				continue
 			}
 		}
-		vv := utils.StyleName(kind, newField.ColumnName)
+		vv := utils.StyleName(kind, field.ColumnName)
 		if vv == "" {
 			continue
 		}
-		if tag == "json" && matcher.HasAffixJSONTag(newField.Comment) {
-			newField.Tags = append(newField.Tags, fmt.Sprintf(`%s:"%s,omitempty,string"`, tag, vv))
+		if tag == "json" && matcher.HasAffixJSONTag(field.Comment) {
+			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty,string"`, tag, vv))
 		} else {
-			newField.Tags = append(newField.Tags, fmt.Sprintf(`%s:"%s,omitempty"`, tag, vv))
+			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty"`, tag, vv))
 		}
 	}
-	return &newField
+	goName := field.GoName
+	for {
+		_, ok := escapeFieldNames[goName]
+		if !ok { // need to escape
+			break
+		}
+		goName = "X" + goName
+		// 和当前字段存在的重复, 再追加一个
+		_, ok = allFieldName[goName]
+		if ok {
+			goName = "X" + goName
+		}
+	}
+	if field.GoName != goName {
+		field.GoName = goName
+		escapeFieldNames[goName] = struct{}{} // 添加为必须转义
+	}
 }
