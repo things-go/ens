@@ -108,6 +108,11 @@ func parserCreateTableStmtColumn(col *ast.ColumnDef) (*schema.Column, error) {
 
 		case ast.ColumnOptionComment:
 			coldef.AddAttrs(&schema.Comment{Text: strings.Trim(formatExprNode(opt.Expr), `"`)})
+		case ast.ColumnOptionOnUpdate:
+			coldef.AddAttrs(&mysql.OnUpdate{
+				Attr: nil,
+				A:    strings.Trim(formatExprNode(opt.Expr), `"`),
+			})
 		}
 	}
 

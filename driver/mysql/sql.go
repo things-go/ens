@@ -102,9 +102,16 @@ func parseSqlColumnDefinition(col *sqlparser.ColumnDefinition) (*schema.Column, 
 	if colType.Default != nil {
 		coldef.Default = &schema.Literal{V: string(colType.Default.Val)}
 	}
+	if colType.OnUpdate != nil {
+		coldef.AddAttrs(&mysql.OnUpdate{
+			Attr: nil,
+			A:    string(colType.OnUpdate.Val),
+		})
+	}
 	if colType.Autoincrement {
 		coldef.AddAttrs(&mysql.AutoIncrement{})
 	}
+
 	if colType.Comment != nil {
 		coldef.AddAttrs(&schema.Comment{Text: string(colType.Comment.Val)})
 	}
