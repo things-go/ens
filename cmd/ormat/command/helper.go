@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/url"
 	"os"
@@ -61,8 +62,15 @@ func getSchema(c *source) (*ens.Schema, error) {
 		if err != nil {
 			return nil, err
 		}
+		inputFile, err := filepath.Glob(c.InputFile[0])
+		if err != nil {
+			return nil, err
+		}
+		if len(inputFile) == 1 && inputFile[0] == c.InputFile[0] {
+			inputFile = c.InputFile
+		}
 		entities := make([]*ens.EntityDescriptor, 0, 256)
-		for _, filename := range c.InputFile {
+		for _, filename := range inputFile {
 			tmpSc, err := func() (*ens.Schema, error) {
 				content, err := os.ReadFile(filename)
 				if err != nil {
