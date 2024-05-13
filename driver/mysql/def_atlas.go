@@ -27,13 +27,7 @@ func intoColumnSql(col *schema.Column) string {
 	} else {
 		switch x := schema.UnderlyingExpr(col.Default).(type) {
 		case *schema.Literal:
-			dv := x.V
-			if dv == `""` || dv == "" {
-				dv = "''"
-			} else {
-				dv = strings.Trim(dv, `"`) // format: `"xxx"` or `'xxx'`
-			}
-			fmt.Fprintf(b, " DEFAULT '%s'", strings.Trim(dv, `"`))
+			fmt.Fprintf(b, " DEFAULT '%s'", strings.Trim(x.V, `"`))
 		case *schema.RawExpr:
 			fmt.Fprintf(b, " DEFAULT %s", x.X)
 		case nil:
