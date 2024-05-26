@@ -149,17 +149,15 @@ func (b {{$stName}}) Count(ctx context.Context, q *{{$queryPrefix}}List{{$stName
 func (b {{$stName}}) List(ctx context.Context, q *{{$queryPrefix}}List{{$stName}}ByFilter) ([]*{{$mdName}}, error) {
     ref := {{$repoPrefix}}Ref_{{$stName}}()
     return ref.New_Executor(b.db).Model().
-            Scopes(list{{$stName}}Filter(ref, q)).
+            Scopes(list{{$stName}}Filter(ref, q), Limit(q.Page, q.PerPage)).
             FindAll()
 }
 
 func (b {{$stName}}) ListPage(ctx context.Context, q *{{$queryPrefix}}List{{$stName}}ByFilter) ([]*{{$mdName}}, int64, error) {
     ref := {{$repoPrefix}}Ref_{{$stName}}()
-    offset := q.PerPage * (q.Page - 1)
-	limit := q.PerPage
 	return ref.New_Executor(b.db).Model().
 		Scopes(list{{$stName}}Filter(ref, q)).
-		FindAllByPage(int(offset), int(limit))
+		FindAllPaginate(q.Page, q.PerPage)
 }
 
 func (b {{$stName}}) PluckIdByFilter(ctx context.Context, q *{{$queryPrefix}}PluckId{{$stName}}ByFilter) ([]int64, error) {

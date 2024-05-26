@@ -159,12 +159,11 @@ func (b {{$stName}}) Count(ctx context.Context, q *{{$queryPrefix}}List{{$stName
     return total, err
 }
 
-
 func (b {{$stName}}) List(ctx context.Context, q *{{$queryPrefix}}List{{$stName}}ByFilter) ([]*{{$mdName}}, error) {
     var rows []*{{$mdName}}
     
     err := b.db.Model(&{{$mdName}}{}).
-            Scopes(list{{$stName}}Filter(q)).
+            Scopes(list{{$stName}}Filter(q), Limit(q.Page, q.PerPage)).
             Find(&rows).Error
     return rows, err
 }
@@ -181,10 +180,7 @@ func (b {{$stName}}) ListPage(ctx context.Context, q *{{$queryPrefix}}List{{$stN
         return nil, 0, err
     }
     if total > 0 {
-        offset := q.PerPage * (q.Page - 1)
-        limit := q.PerPage
-        err = db.Limit(int(limit)).
-                Offset(int(offset)).
+        err = db.Scopes(Pagination(q.Page, q.PerPage)).
                 Find(&rows).Error
         if err != nil {
             return nil, 0, err

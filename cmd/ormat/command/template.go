@@ -26,6 +26,7 @@ var (
 	dalRapierTpl = tpl.Lookup("dal_rapier.tpl")
 	dalGormTpl   = tpl.Lookup("dal_gorm.tpl")
 	dalQueryTpl  = tpl.Lookup("dal_query.tpl")
+	dalOptionTpl = tpl.Lookup("dal_option.tpl")
 )
 
 type Dal struct {

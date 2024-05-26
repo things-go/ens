@@ -50,9 +50,24 @@ func newDakCmd() *dalCmd {
 			if err != nil {
 				return err
 			}
+			buf := bytes.Buffer{}
 			packageName := cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir))
 			queryImportPath := strings.Join([]string{root.DalImportPath, "query"}, "/")
-
+			dalOptionFilename := joinFilename(root.OutputDir, "dal_option", ".go")
+			_, err = os.Stat(dalOptionFilename)
+			if !(err == nil || os.IsExist(err)) {
+				err = dalOptionTpl.Execute(&buf, Dal{Package: packageName})
+				if err != nil {
+					return err
+				}
+				err = WriteFile(dalOptionFilename, buf.Bytes())
+				if err != nil {
+					return fmt.Errorf("dal_option: %v", err)
+				}
+				slog.Info("👉 " + dalOptionFilename)
+			} else {
+				slog.Warn("🐛 dal_option.go already exists, skipping")
+			}
 			dal := Dal{
 				Package:     packageName,
 				Imports:     []string{root.ModelImportPath, queryImportPath, root.RepoImportPath},
@@ -69,15 +84,16 @@ func newDakCmd() *dalCmd {
 				RepoPrefix:  "",
 				Entity:      nil,
 			}
+
 			for _, entity := range schemaes.Entities {
 				dalFilename := joinFilename(root.OutputDir, entity.Name, ".go")
 				_, err = os.Stat(dalFilename)
 				if err == nil || os.IsExist(err) {
-					slog.Warn("🐛 " + entity.Name + " already exists")
+					slog.Warn("🐛 " + entity.Name + " already exists, skipping")
 					continue
 				}
 				dal.Entity = entity
-				buf := bytes.Buffer{}
+				buf.Reset()
 				err = daltpl.Execute(&buf, dal)
 				if err != nil {
 					return err
