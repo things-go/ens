@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -70,11 +71,11 @@ func newDakCmd() *dalCmd {
 			}
 			for _, entity := range schemaes.Entities {
 				dalFilename := joinFilename(root.OutputDir, entity.Name, ".go")
-				// _, err = os.Stat(dalFilename)
-				// if err == nil || os.IsExist(err) {
-				// 	slog.Warn("🐛 " + entity.Name + " already exists")
-				// 	continue
-				// }
+				_, err = os.Stat(dalFilename)
+				if err == nil || os.IsExist(err) {
+					slog.Warn("🐛 " + entity.Name + " already exists")
+					continue
+				}
 				dal.Entity = entity
 				buf := bytes.Buffer{}
 				err = daltpl.Execute(&buf, dal)
