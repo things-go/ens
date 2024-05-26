@@ -123,7 +123,7 @@ func (g *CodeGen) genModelStructField(field *FieldDescriptor) string {
 	b := strings.Builder{}
 	b.Grow(128)
 	ident := field.Type.Ident
-	if field.GoPointer && !field.Type.NoPointer {
+	if field.GoPointer && !field.Type.NonPointer {
 		ident = "*" + field.Type.Ident
 	}
 	// field
