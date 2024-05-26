@@ -41,6 +41,7 @@ func NewRootCmd() *RootCmd {
 		newModelCmd().cmd,
 		newProtoCmd().cmd,
 		newRapierCmd().cmd,
+		newDakCmd().cmd,
 	)
 	root.cmd = cmd
 	return root

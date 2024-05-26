@@ -114,10 +114,10 @@ func Kebab(str string) string {
 // name_id_com -> nameIdCom
 // name_idcom -> nameIdcom
 func SmallCamelCase(fieldName string) string {
-	return LowTitle(CamelCase(fieldName))
+	return LowTitle(PascalCase(fieldName))
 }
 
-// CamelCase returns the CamelCased name.
+// PascalCase returns the CamelCased name.
 // If there is an interior underscore followed by a lower case letter,
 // drop the underscore and convert the letter to upper case.
 // There is a remote possibility of this rewrite causing a name collision,
@@ -125,7 +125,7 @@ func SmallCamelCase(fieldName string) string {
 // C++ generator lowercases names, it's extremely unlikely to have two fields
 // with different capitalizations.
 // In short, _my_field_name_2 becomes XMyFieldName_2.
-func CamelCase(s string) string {
+func PascalCase(s string) string {
 	return JoinCase(s, '_')
 }
 

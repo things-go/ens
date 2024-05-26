@@ -19,7 +19,7 @@ type protoOpt struct {
 	// codegen
 	PackageName               string            // required, proto 包名
 	Options                   map[string]string // required, proto option
-	Style                     string            // 字段代码风格, snakeCase, smallCamelCase, camelCase
+	Style                     string            // 字段代码风格, snakeCase, smallCamelCase, pascalCase
 	DisableDocComment         bool              // 禁用doc注释
 	DisableBool               bool              // 禁用bool,使用int32
 	DisableTimestamp          bool              // 禁用google.protobuf.Timestamp,使用int64
@@ -82,7 +82,7 @@ func newProtoCmd() *protoCmd {
 
 	cmd.Flags().StringVar(&root.PackageName, "package", "", "proto package name")
 	cmd.Flags().StringToStringVar(&root.Options, "options", nil, "proto options key/value")
-	cmd.Flags().StringVar(&root.Style, "style", "", "字段代码风格, [snakeCase,smallCamelCase,camelCase]")
+	cmd.Flags().StringVar(&root.Style, "style", "", "字段代码风格, [snakeCase,smallCamelCase,pascalCase]")
 	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")
 	cmd.Flags().BoolVar(&root.DisableBool, "disableBool", false, "禁用bool,使用int32")
 	cmd.Flags().BoolVar(&root.DisableTimestamp, "disableTimestamp", false, "禁用google.protobuf.Timestamp,使用int64")

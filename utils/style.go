@@ -2,7 +2,7 @@ package utils
 
 const (
 	StyleSmallCamelCase = "smallCamelCase"
-	StyleCamelCase      = "camelCase"
+	StylePascalCase     = "pascalCase"
 	StyleSnakeCase      = "snakeCase"
 	StyleKebab          = "kebab"
 )
@@ -12,8 +12,8 @@ func StyleName(kind, name string) string {
 	switch kind {
 	case StyleSmallCamelCase:
 		vv = SmallCamelCase(name)
-	case StyleCamelCase:
-		vv = CamelCase(name)
+	case StylePascalCase:
+		vv = PascalCase(name)
 	case StyleSnakeCase:
 		vv = SnakeCase(name)
 	case StyleKebab:

@@ -101,7 +101,7 @@ func (g *CodeGen) Gen() *CodeGen {
 	}
 	//* struct
 	for _, et := range g.Entities {
-		structName := utils.CamelCase(et.Name)
+		structName := utils.PascalCase(et.Name)
 		tableName := et.Name
 		g.Printf("// %s %s\n", structName, strings.ReplaceAll(strings.TrimSpace(et.Comment), "\n", "\n// "))
 		g.Printf("type %s struct {\n", structName)

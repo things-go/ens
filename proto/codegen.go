@@ -18,7 +18,7 @@ type CodeGen struct {
 	Version                   string            // required, 生成版本
 	PackageName               string            // required, proto 包名
 	Options                   map[string]string // required, proto option
-	Style                     string            // 字段代码风格, snakeCase, smallCamelCase, camelCase
+	Style                     string            // 字段代码风格, snakeCase, smallCamelCase, pascalCase
 	DisableDocComment         bool              // 禁用doc注释
 	DisableBool               bool              // 禁用bool,使用int32
 	DisableTimestamp          bool              // 禁用google.protobuf.Timestamp,使用int64
@@ -82,7 +82,7 @@ func (g *CodeGen) Gen() *CodeGen {
 	g.Println()
 
 	for _, et := range g.Messages {
-		structName := utils.CamelCase(et.Name)
+		structName := utils.PascalCase(et.Name)
 
 		g.Printf("// %s %s\n", structName, strings.ReplaceAll(strings.TrimSpace(et.Comment), "\n", "\n// "))
 		g.Printf("message %s {\n", structName)

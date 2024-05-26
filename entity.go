@@ -35,7 +35,7 @@ func (s *EntityDescriptor) IntoRapier() *rapier.Struct {
 		fields = append(fields, field.IntoRapier())
 	}
 	return &rapier.Struct{
-		GoName:    utils.CamelCase(s.Name),
+		GoName:    utils.PascalCase(s.Name),
 		TableName: s.Name,
 		Comment:   s.Comment,
 		Fields:    fields,
