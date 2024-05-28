@@ -29,6 +29,7 @@ func newSqlCmd() *sqlCmd {
 	cmd := &cobra.Command{
 		Use:     "sql",
 		Short:   "Generate sql file",
+		Long:    `should be output as 'atlas schema inspect -u "mysql://root:123456@127.0.0.1:3306/test" --format "{{ sql . }}"'`,
 		Example: "ormat sql",
 		RunE: func(*cobra.Command, []string) error {
 			sc, err := getSchema(&source{
