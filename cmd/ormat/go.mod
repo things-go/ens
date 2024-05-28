@@ -1,13 +1,13 @@
 module github.com/things-go/ens/cmd/ormat
 
-go 1.22
+go 1.22.3
 
 replace github.com/things-go/ens => ../..
 
 require (
 	ariga.io/atlas v0.22.0
 	github.com/spf13/cobra v1.8.0
-	github.com/things-go/ens v0.3.1
+	github.com/things-go/ens v1.0.0
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.10
 )
@@ -28,7 +28,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/pingcap/errors v0.11.5-0.20221009092201-b66cddb77c32 // indirect
-	github.com/pingcap/failpoint v0.0.0-20240412033321-fd0796e60f86 // indirect
+	github.com/pingcap/failpoint v0.0.0-20240528011301-b51a646c7c86 // indirect
 	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
 	github.com/pingcap/tidb/parser v0.0.0-20231013125129-93a834a6bf8d // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
