@@ -2,7 +2,7 @@ module github.com/things-go/ens/cmd/ormat
 
 go 1.23
 
-replace github.com/things-go/ens => ../..
+// replace github.com/things-go/ens => ../..
 
 require (
 	ariga.io/atlas v0.28.1
