@@ -206,11 +206,19 @@ func (field *FieldDescriptor) fixField(allFieldName, escapeFieldNames map[string
 		if vv == "" {
 			continue
 		}
+		format := ""
 		if tag == "json" && matcher.HasAffixJSONTag(field.Comment) {
-			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty,string"`, tag, vv))
+			if opt.IgnoreOmitempty {
+				format = `%s:"%s,string"`
+			} else {
+				format = `%s:"%s,omitempty,string"`
+			}
+		} else if opt.IgnoreOmitempty {
+			format = `%s:"%s"`
 		} else {
-			field.Tags = append(field.Tags, fmt.Sprintf(`%s:"%s,omitempty"`, tag, vv))
+			format = `%s:"%s,omitempty"`
 		}
+		field.Tags = append(field.Tags, fmt.Sprintf(format, tag, vv))
 	}
 	goName := field.GoName
 	for {
