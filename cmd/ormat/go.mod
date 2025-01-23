@@ -2,12 +2,12 @@ module github.com/things-go/ens/cmd/ormat
 
 go 1.23
 
-replace github.com/things-go/ens => ../..
+// replace github.com/things-go/ens => ../..
 
 require (
 	ariga.io/atlas v0.30.0
 	github.com/spf13/cobra v1.8.1
-	github.com/things-go/ens v1.0.0-rc7
+	github.com/things-go/ens v1.0.0-rc8
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
 )
