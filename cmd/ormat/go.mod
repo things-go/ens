@@ -2,13 +2,13 @@ module github.com/things-go/ens/cmd/ormat
 
 go 1.23
 
-// replace github.com/things-go/ens => ../..
+replace github.com/things-go/ens => ../..
 
 require (
-	ariga.io/atlas v0.29.0
+	ariga.io/atlas v0.30.0
 	github.com/spf13/cobra v1.8.1
 	github.com/things-go/ens v1.0.0-rc7
-	gorm.io/driver/sqlite v1.5.6
+	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
 )
 
@@ -35,18 +35,18 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // indirect
-	github.com/zclconf/go-cty v1.15.1 // indirect
+	github.com/zclconf/go-cty v1.16.2 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.28.0 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	golang.org/x/tools v0.29.0 // indirect
+	google.golang.org/protobuf v1.36.3 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gorm.io/datatypes v1.2.5 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
-	gorm.io/driver/postgres v1.5.2 // indirect
+	gorm.io/driver/postgres v1.5.11 // indirect
 	gorm.io/plugin/soft_delete v1.2.1 // indirect
 )

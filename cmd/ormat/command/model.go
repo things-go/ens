@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/things-go/ens"
@@ -18,11 +19,11 @@ type modelOpt struct {
 	PackageName string // 包名
 
 	ens.Option
-	DisableCommentTag bool // 禁用注释放入tag标签中
-	DisableDocComment bool // 禁用文档注释
-
-	Merge         bool
-	MergeFilename string
+	DisableCommentTag bool              // 禁用注释放入tag标签中
+	DisableDocComment bool              // 禁用文档注释
+	CustomFieldIdent  map[string]string // 自定义字段类型, 格式: TableName.ColumnName->Ident
+	Merge             bool
+	MergeFilename     string
 }
 
 type modelCmd struct {
@@ -43,6 +44,25 @@ func newModelCmd() *modelCmd {
 				return err
 			}
 			packageName := cmp.Or(root.PackageName, utils.GetPkgName(root.OutputDir))
+			customFieldIdent := map[string]map[string]string{}
+			for key, val := range root.CustomFieldIdent {
+				ks := strings.Split(key, ".")
+				if len(ks) != 2 || val == "" {
+					continue
+				}
+				tb := ks[0]
+				field := ks[1]
+				if tb == "" || field == "" {
+					continue
+				}
+				fields, ok := customFieldIdent[tb]
+				if !ok {
+					fields = map[string]string{}
+				}
+				fields[field] = val
+				customFieldIdent[tb] = fields
+			}
+
 			if root.Merge {
 				g := ens.CodeGen{
 					Entities:          schemaes.Entities,
@@ -50,6 +70,7 @@ func newModelCmd() *modelCmd {
 					Version:           version,
 					PackageName:       packageName,
 					DisableDocComment: root.DisableDocComment,
+					CustomFieldIdent:  customFieldIdent,
 					Option:            root.Option,
 				}
 				data, err := g.Gen().FormatSource()
@@ -70,6 +91,7 @@ func newModelCmd() *modelCmd {
 						Version:           version,
 						PackageName:       packageName,
 						DisableDocComment: root.DisableDocComment,
+						CustomFieldIdent:  customFieldIdent,
 						Option:            root.Option,
 					}
 					data, err := g.Gen().FormatSource()
@@ -109,6 +131,7 @@ func newModelCmd() *modelCmd {
 	cmd.Flags().BoolVar(&root.DisableCommentTag, "disableCommentTag", false, "禁用注释放入tag标签中")
 	cmd.Flags().BoolVar(&root.EnableForeignKey, "enableForeignKey", false, "使用外键")
 	cmd.Flags().StringSliceVar(&root.EscapeName, "escapeName", nil, "escape name list")
+	cmd.Flags().StringToStringVar(&root.CustomFieldIdent, "customFieldIdent", map[string]string{}, "自定义字段类型, 格式: TableName.ColumnName=Ident")
 
 	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file or not")
 	cmd.Flags().StringVar(&root.MergeFilename, "filename", "", "merge filename")
