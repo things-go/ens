@@ -3,7 +3,7 @@ module github.com/things-go/ens
 go 1.23
 
 require (
-	ariga.io/atlas v0.30.0
+	ariga.io/atlas v0.31.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/pingcap/tidb/parser v0.0.0-20231013125129-93a834a6bf8d
 	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
@@ -32,6 +32,7 @@ require (
 	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/zclconf/go-cty v1.15.1 // indirect
+	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
