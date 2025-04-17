@@ -85,7 +85,7 @@ func newSqlCmd() *sqlCmd {
 	cmd.Flags().BoolVar(&root.Merge, "merge", false, "merge in a file")
 	cmd.Flags().BoolVar(&root.DisableDocComment, "disableDocComment", false, "禁用文档注释")
 
-	cmd.MarkFlagRequired("url")
+	cmd.MarkFlagRequired("url") // nolint: errcheck
 
 	root.cmd = cmd
 	return root
