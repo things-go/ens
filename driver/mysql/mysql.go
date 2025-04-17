@@ -17,8 +17,8 @@ var _ driver.Driver = (*MySQL)(nil)
 
 type MySQL struct{}
 
-func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
-	schemaes, err := self.inspectSchema(ctx, arg)
+func (ms *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
+	schemaes, err := ms.inspectSchema(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func (self *MySQL) InspectSchema(ctx context.Context, arg *driver.InspectOption)
 	}, nil
 }
 
-func (self *MySQL) inspectSchema(ctx context.Context, arg *driver.InspectOption) (*schema.Schema, error) {
+func (ms *MySQL) inspectSchema(ctx context.Context, arg *driver.InspectOption) (*schema.Schema, error) {
 	client, err := sqlclient.Open(ctx, arg.URL)
 	if err != nil {
 		return nil, err

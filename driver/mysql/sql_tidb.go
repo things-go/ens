@@ -22,7 +22,7 @@ import (
 type SQLTidb struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
+func (st *SQLTidb) InspectSchema(_ context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
 	pr := parser.New()
 	stmts, _, err := pr.ParseSQL(arg.Data)
 	if err != nil {
@@ -53,7 +53,7 @@ func parserCreateTableStmtTable(stmt *ast.CreateTableStmt) (*schema.Table, error
 	//* table
 	// ENGINE=InnoDB default charset=utf8mb4 collate=utf8mb4_general_ci comment='我是注释'
 	for _, option := range stmt.Options {
-		switch option.Tp {
+		switch option.Tp { // nolint: exhaustive
 		case ast.TableOptionEngine:
 			table.AddAttrs(&mysql.Engine{V: option.StrValue, Default: false})
 		case ast.TableOptionCharset:
@@ -95,7 +95,7 @@ func parserCreateTableStmtColumn(col *ast.ColumnDef) (*schema.Column, error) {
 	coldef := schema.NewColumn(col.Name.Name.L)
 	nullable := true
 	for _, opt := range col.Options {
-		switch opt.Tp {
+		switch opt.Tp { // nolint: exhaustive
 		case ast.ColumnOptionNotNull:
 			nullable = false
 		case ast.ColumnOptionAutoIncrement:
@@ -181,7 +181,7 @@ func parserCreateTableStmtColumn(col *ast.ColumnDef) (*schema.Column, error) {
 				Type: &schema.FloatType{
 					T:         ftTypeValue,
 					Unsigned:  isUnsigned,
-					Precision: int(length),
+					Precision: length,
 				},
 				Raw:  ftTypeRaw,
 				Null: nullable,
@@ -300,7 +300,7 @@ func parseCreateTableStmtIndex(table *schema.Table, idx *ast.Constraint, columns
 	indexName := idx.Name
 	isPk := false
 	unique := false
-	switch idx.Tp {
+	switch idx.Tp { // nolint: exhaustive
 	case ast.ConstraintPrimaryKey:
 		indexName = "PRIMARY"
 		isPk = true
@@ -327,7 +327,7 @@ func parseCreateTableStmtIndex(table *schema.Table, idx *ast.Constraint, columns
 		if ok {
 			cols = append(cols, col)
 		} else {
-			return nil, fmt.Errorf("Key('%s') column '%s' doesn't exist in table '%s'.", indexName, columnName, table.Name)
+			return nil, fmt.Errorf("Key('%s') column '%s' doesn't exist in table '%s'", indexName, columnName, table.Name)
 		}
 	}
 	index := schema.NewIndex(indexName).

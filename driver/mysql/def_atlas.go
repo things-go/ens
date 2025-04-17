@@ -150,7 +150,7 @@ func intoGormTag(tb *schema.Table, col *schema.Column) string {
 	b := &strings.Builder{}
 	b.Grow(64)
 	fmt.Fprintf(b, `gorm:"column:%s`, col.Name)
-	if !(isPk && autoIncrement) {
+	if !isPk || !autoIncrement {
 		fmt.Fprintf(b, ";type:%s", col.Type.Raw)
 	}
 	if !col.Type.Null {

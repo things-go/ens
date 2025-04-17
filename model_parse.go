@@ -84,7 +84,7 @@ func structToFielders(vt reflect.Type) []*FieldDescriptor {
 
 func intoGoTypeType(origTyp reflect.Type, tag string) (t Type, skip bool) {
 	typ := indirect(origTyp)
-	switch ident := typ.String(); typ.Kind() {
+	switch ident := typ.String(); typ.Kind() { // nolint: exhaustive
 	case reflect.Bool:
 		t = TypeBool
 	case reflect.Int:
@@ -140,7 +140,7 @@ func intoGoTypeType(origTyp reflect.Type, tag string) (t Type, skip bool) {
 			t = TypeInt64
 		default:
 			t = TypeOther
-			skip = !(reflect.PointerTo(typ).Implements(rowScanner) && typ.Implements(rowValuer))
+			skip = !reflect.PointerTo(typ).Implements(rowScanner) || !typ.Implements(rowValuer)
 		}
 	case reflect.Slice:
 		switch ident {

@@ -103,7 +103,7 @@ func (t Type) IsValid() bool {
 }
 
 func (t Type) IntoProtoKind() (k protoreflect.Kind, n string) {
-	switch t {
+	switch t { // nolint: exhaustive
 	case TypeBool:
 		k = protoreflect.BoolKind
 		n = k.String()
@@ -142,7 +142,7 @@ func (t Type) IntoProtoKind() (k protoreflect.Kind, n string) {
 }
 
 func (t Type) IntoRapierType() rapier.Type {
-	switch t {
+	switch t { // nolint: exhaustive
 	case TypeBool:
 		return rapier.Bool
 	case TypeInt8:
@@ -267,7 +267,7 @@ func (t *GoType) IsValid() bool {
 
 // Comparable reports whether values of this type are comparable.
 func (t *GoType) Comparable() bool {
-	switch t.Type {
+	switch t.Type { // nolint: exhaustive
 	case TypeBool, TypeTime, TypeUUID, TypeEnum, TypeString:
 		return true
 	case TypeOther:

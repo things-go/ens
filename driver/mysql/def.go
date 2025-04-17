@@ -75,17 +75,17 @@ func NewTableDef(tb *schema.Table) ens.TableDef {
 	return &TableDef{tb: tb}
 }
 
-func (self *TableDef) Table() *schema.Table { return self.tb }
+func (d *TableDef) Table() *schema.Table { return d.tb }
 
-func (self *TableDef) PrimaryKey() ens.IndexDef {
-	if self.tb.PrimaryKey != nil {
-		return NewIndexDef(self.tb.PrimaryKey)
+func (d *TableDef) PrimaryKey() ens.IndexDef {
+	if d.tb.PrimaryKey != nil {
+		return NewIndexDef(d.tb.PrimaryKey)
 	}
 	return nil
 }
 
-func (self *TableDef) Definition() string {
-	return intoTableSql(self.tb)
+func (d *TableDef) Definition() string {
+	return intoTableSql(d.tb)
 }
 
 type ColumnDef struct {
@@ -96,11 +96,11 @@ func NewColumnDef(col *schema.Column) ens.ColumnDef {
 	return &ColumnDef{col: col}
 }
 
-func (self *ColumnDef) Column() *schema.Column { return self.col }
+func (d *ColumnDef) Column() *schema.Column { return d.col }
 
-func (self *ColumnDef) Definition() string { return intoColumnSql(self.col) }
+func (d *ColumnDef) Definition() string { return intoColumnSql(d.col) }
 
-func (self *ColumnDef) GormTag(tb *schema.Table) string { return intoGormTag(tb, self.col) }
+func (d *ColumnDef) GormTag(tb *schema.Table) string { return intoGormTag(tb, d.col) }
 
 type IndexDef struct {
 	index *schema.Index
@@ -108,9 +108,9 @@ type IndexDef struct {
 
 func NewIndexDef(index *schema.Index) ens.IndexDef { return &IndexDef{index: index} }
 
-func (self *IndexDef) Index() *schema.Index { return self.index }
+func (d *IndexDef) Index() *schema.Index { return d.index }
 
-func (self *IndexDef) Definition() string { return intoIndexSql(self.index) }
+func (d *IndexDef) Definition() string { return intoIndexSql(d.index) }
 
 type ForeignKeyDef struct {
 	fk *schema.ForeignKey
@@ -120,6 +120,6 @@ func NewForeignKey(fk *schema.ForeignKey) ens.ForeignKeyDef {
 	return &ForeignKeyDef{fk: fk}
 }
 
-func (self *ForeignKeyDef) ForeignKey() *schema.ForeignKey { return self.fk }
+func (d *ForeignKeyDef) ForeignKey() *schema.ForeignKey { return d.fk }
 
-func (self *ForeignKeyDef) Definition() string { return intoForeignKeySql(self.fk) }
+func (d *ForeignKeyDef) Definition() string { return intoForeignKeySql(d.fk) }

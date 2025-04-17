@@ -20,8 +20,8 @@ var _ driver.Driver = (*SQL)(nil)
 type SQL struct{}
 
 // InspectSchema implements driver.Driver.
-func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
-	table, err := self.inspectSchema(ctx, arg)
+func (sq *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (*ens.Schema, error) {
+	table, err := sq.inspectSchema(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (self *SQL) InspectSchema(ctx context.Context, arg *driver.InspectOption) (
 	}, nil
 }
 
-func (self *SQL) inspectSchema(_ context.Context, arg *driver.InspectOption) (*schema.Table, error) {
+func (sq *SQL) inspectSchema(_ context.Context, arg *driver.InspectOption) (*schema.Table, error) {
 	statement, err := sqlparser.Parse(arg.Data)
 	if err != nil {
 		return nil, err
@@ -373,7 +373,7 @@ func parseSqlIndexDefinition(table *schema.Table, idx *sqlparser.IndexDefinition
 		if ok {
 			cols = append(cols, col)
 		} else {
-			return nil, fmt.Errorf("Key('%s') column '%s' doesn't exist in table '%s'.", indexName, columnName, table.Name)
+			return nil, fmt.Errorf("Key('%s') column '%s' doesn't exist in table '%s'", indexName, columnName, table.Name)
 		}
 	}
 	index := schema.NewIndex(indexName).
